@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nonogram SVG board test</title>
+<style>
+:root{--bg:#14161c;--panel:#1d2029;--fg:#e8eaf0;--muted:#8d93a5;--accent:#6aa7ff;--line:#363c4d;--line2:#8a92aa;--fill:#e8eaf0;--mark:#6aa7ff}
+@media (prefers-color-scheme:light){:root{--bg:#f2f4f8;--panel:#fff;--fg:#1c2030;--muted:#5d6477;--accent:#2a64d6;--line:#cdd3e0;--line2:#6d768d;--fill:#1c2030;--mark:#2a64d6}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:0 0 4px}.sub{color:var(--muted);font-size:.9rem}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+button{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit}
+button.on{border-color:var(--accent);color:var(--accent)}
+#view{height:68vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+svg{display:block;touch-action:none;user-select:none}
+#out{white-space:pre-wrap;font:13px ui-monospace,monospace;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:12px;color:var(--muted)}
+</style></head><body><div class="wrap">
+<h1>Nonogram board test <span class="sub">(drawn as SVG)</span></h1>
+<div class="sub">Left click or drag = fill · right click or drag = ✕ · mouse wheel = zoom · scroll bars = pan</div>
+<div class="bar" id="bar"></div>
+<div id="view"></div>
+<div class="bar"><button id="bench">Run benchmark</button><button id="copy">Copy results</button><span class="sub" id="zl"></span></div>
+<div id="out">Pick a size, then press "Run benchmark" (it paints the whole board, clears it, zooms and measures single clicks).</div>
+</div>
+<script>
+const CS=24, NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id);
+const el=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+let R,C,grid,els,svg,hit,fillG,baseW,baseH,offX,offY,zoom=1,build_ms=0,drag=null;
+const raf=()=>new Promise(r=>requestAnimationFrame(r));
+function makePuzzle(r,c){let s=12345;const rnd=()=>(s=s*16807%2147483647)/2147483647;
+  let g=Array.from({length:r},()=>Array.from({length:c},()=>rnd()<.5?1:0));
+  for(let k=0;k<3;k++){const o=g;g=o.map((row,i)=>row.map((_,j)=>{let n=0,t=0;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const v=o[i+a]?.[j+b];if(v!==undefined){n+=v;t++}}return n/t>.5?1:0}))}
+  return g}
+const runs=a=>{const o=[];let n=0;for(const v of a){if(v)n++;else if(n){o.push(n);n=0}}if(n)o.push(n);return o.length?o:[0]};
+function build(r,c){const t0=performance.now();R=r;C=c;
+  const g=makePuzzle(r,c),rowH=g.map(runs),colH=g[0].map((_,j)=>runs(g.map(x=>x[j])));
+  grid=Array.from({length:R},()=>Array(C).fill(0));els=new Map();
+  offX=Math.max(...rowH.map(h=>h.length))*CS*.8+8;offY=Math.max(...colH.map(h=>h.length))*CS*.8+8;
+  baseW=offX+C*CS+6;baseH=offY+R*CS+6;zoom=1;$('view').textContent='';
+  svg=el('svg',{viewBox:`0 0 ${baseW} ${baseH}`,width:baseW,height:baseH},$('view'));
+  let thin='',thick='';
+  for(let i=0;i<=R;i++){const d=`M${offX} ${offY+i*CS}H${offX+C*CS}`;if(i%5&&i!==R)thin+=d;else thick+=d}
+  for(let j=0;j<=C;j++){const d=`M${offX+j*CS} ${offY}V${offY+R*CS}`;if(j%5&&j!==C)thin+=d;else thick+=d}
+  el('path',{d:thin,stroke:'var(--line)','stroke-width':1,fill:'none'},svg);
+  el('path',{d:thick,stroke:'var(--line2)','stroke-width':1.8,fill:'none'},svg);
+  const ta={'font-size':CS*.6,'font-family':'system-ui,sans-serif',fill:'var(--fg)','text-anchor':'middle','dominant-baseline':'central'};
+  rowH.forEach((h,i)=>h.forEach((n,k)=>{const t=el('text',{...ta,x:offX-8-(h.length-1-k)*CS*.8-CS*.3,y:offY+(i+.5)*CS},svg);t.textContent=n}));
+  colH.forEach((h,j)=>h.forEach((n,k)=>{const t=el('text',{...ta,x:offX+(j+.5)*CS,y:offY-8-(h.length-1-k)*CS*.8-CS*.3},svg);t.textContent=n}));
+  fillG=el('g',{},svg);
+  hit=el('rect',{x:offX,y:offY,width:C*CS,height:R*CS,fill:'transparent'},svg);
+  hit.addEventListener('pointerdown',down);hit.addEventListener('pointermove',move);
+  hit.addEventListener('pointerup',()=>drag=null);hit.addEventListener('contextmenu',e=>e.preventDefault());
+  build_ms=performance.now()-t0;fit();document.querySelectorAll('#bar button').forEach(b=>b.classList.toggle('on',b.dataset.n==r+'x'+c))}
+function setCell(r,c,v){if(grid[r][c]===v)return;grid[r][c]=v;const k=r*C+c,old=els.get(k);if(old){old.remove();els.delete(k)}
+  const x=offX+c*CS,y=offY+r*CS;
+  if(v===1)els.set(k,el('rect',{x:x+1.5,y:y+1.5,width:CS-3,height:CS-3,rx:3,fill:'var(--fill)'},fillG));
+  else if(v===2){const m=CS*.3;els.set(k,el('path',{d:`M${x+m} ${y+m}L${x+CS-m} ${y+CS-m}M${x+CS-m} ${y+m}L${x+m} ${y+CS-m}`,stroke:'var(--mark)','stroke-width':2,'stroke-linecap':'round',fill:'none'},fillG))}}
+function cellAt(e){const b=svg.getBoundingClientRect(),x=(e.clientX-b.left)/b.width*baseW-offX,y=(e.clientY-b.top)/b.height*baseH-offY,c=Math.floor(x/CS),r=Math.floor(y/CS);return r>=0&&c>=0&&r<R&&c<C?[r,c]:null}
+function down(e){e.preventDefault();const p=cellAt(e);if(!p)return;const b=e.button===2?2:1;drag={v:grid[p[0]][p[1]]===b?0:b};hit.setPointerCapture(e.pointerId);setCell(p[0],p[1],drag.v)}
+function move(e){if(!drag)return;const p=cellAt(e);if(p)setCell(p[0],p[1],drag.v)}
+function setZoom(z,mx=0,my=0){z=Math.min(6,Math.max(.1,z));const v=$('view'),k=z/zoom,cx=v.scrollLeft+mx,cy=v.scrollTop+my;zoom=z;
+  svg.setAttribute('width',baseW*z);svg.setAttribute('height',baseH*z);v.scrollLeft=cx*k-mx;v.scrollTop=cy*k-my;$('zl').textContent='zoom '+Math.round(z*100)+'%'}
+function fit(){setZoom(Math.min(1.5,($('view').clientWidth-2)/baseW));$('view').scrollLeft=0;$('view').scrollTop=0}
+$('view').addEventListener('wheel',e=>{e.preventDefault();const b=$('view').getBoundingClientRect();setZoom(zoom*(e.deltaY<0?1.15:1/1.15),e.clientX-b.left,e.clientY-b.top)},{passive:false});
+[[15,15],[30,30],[45,45],[60,60]].forEach(([r,c])=>{const b=document.createElement('button');b.textContent=r+'×'+c;b.dataset.n=r+'x'+c;b.onclick=()=>build(r,c);$('bar').appendChild(b)});
+const fitB=document.createElement('button');fitB.textContent='Fit to window';fitB.onclick=fit;$('bar').appendChild(fitB);
+const ms=t=>(performance.now()-t).toFixed(0)+' ms';
+$('bench').onclick=async()=>{const o=[`board ${R}×${C}: ${document.querySelectorAll('svg *').length} SVG elements, built in ${build_ms.toFixed(0)} ms`];$('out').textContent='running…';await raf();
+  let t=performance.now();for(let r=0;r<R;r++)for(let c=0;c<C;c++)setCell(r,c,1);await raf();o.push(`paint all ${R*C} cells black, until on screen: ${ms(t)}`);
+  t=performance.now();for(let r=0;r<R;r++)for(let c=0;c<C;c++)setCell(r,c,0);await raf();o.push(`clear all cells: ${ms(t)}`);
+  fit();await raf();t=performance.now();for(let i=0;i<30;i++){setZoom(zoom*(i<15?1.15:1/1.15),300,300);await raf()}o.push(`30 wheel-zoom steps: average ${((performance.now()-t)/30).toFixed(1)} ms per frame (16.7 = smooth 60 fps)`);
+  const L=[];for(let i=0;i<60;i++){const t1=performance.now();setCell(i%R,(i*7)%C,1);await raf();L.push(performance.now()-t1)}L.sort((a,b)=>a-b);
+  o.push(`single click until on screen: median ${L[30].toFixed(1)} ms, worst ${L[59].toFixed(1)} ms`);
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++)setCell(r,c,0);fit();o.push(`browser: ${navigator.userAgent}`);$('out').textContent=o.join('\n')};
+$('copy').onclick=()=>navigator.clipboard?.writeText($('out').textContent).then(()=>$('copy').textContent='Copied!');
+build(60,60);
+</script></body></html>
