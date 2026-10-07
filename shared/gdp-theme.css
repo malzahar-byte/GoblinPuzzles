@@ -1,0 +1,215 @@
+/* Goblin Does Puzzles — shared design system (page shell, panels, toolbar, drawer look). */
+/* Generic across puzzle projects; nothing here knows about nonograms specifically. */
+/* Light/dark is set on <html data-bs-theme="..."> by a project's settings module. */
+
+:root, html[data-bs-theme="dark"] {
+    --gdp-bg: #16181d;
+    --gdp-fg: #f1f1f1;
+    --gdp-muted: #a9adb5;
+    --gdp-panel: #20232a;
+    --gdp-panel-border: #343841;
+    --gdp-accent: #4f8cff;
+    --gdp-grid: #3a3f4a;
+    --gdp-radius: 0.6rem;
+}
+html[data-bs-theme="light"] {
+    --gdp-bg: #f3f4f6;
+    --gdp-fg: #1b1d22;
+    --gdp-muted: #5b606a;
+    --gdp-panel: #ffffff;
+    --gdp-panel-border: #dde1e6;
+    --gdp-accent: #2f6fed;
+    --gdp-grid: #cdd3db;
+}
+
+body {
+    background-color: var(--gdp-bg);
+    color: var(--gdp-fg);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Page shell: comfortable max width, centered, consistent breathing room */
+.gdp-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 3rem;
+}
+
+.gdp-header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+.gdp-header h1 {
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.1rem;
+}
+.gdp-header .gdp-subtitle {
+    color: var(--gdp-muted);
+    font-size: 0.95rem;
+}
+
+.gdp-panel {
+    background: var(--gdp-panel);
+    border: 1px solid var(--gdp-panel-border);
+    border-radius: var(--gdp-radius);
+}
+.gdp-muted { color: var(--gdp-muted); }
+
+/* Toolbar: groups of related buttons that wrap cleanly on narrow screens */
+.gdp-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem 0.6rem;
+    margin-bottom: 1rem;
+}
+.gdp-toolbar .btn-group {
+    flex: 0 0 auto;
+}
+
+/* Wraps the board. The board box inside is the only scroller (see gdp-board.css); this must
+   stay non-scrolling so both scroll bars appear together at the board's own edges. */
+.gdp-board-wrap {
+    display: block;
+    padding: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.gdp-section-title {
+    font-weight: 700;
+    margin-top: 1.25rem;
+    margin-bottom: 0.4rem;
+}
+.gdp-section-title:first-child { margin-top: 0; }
+
+.gdp-hint-btn {
+    background: none;
+    border: none;
+    color: var(--gdp-muted);
+    padding: 0.1rem 0.3rem;
+    line-height: 1;
+}
+.gdp-hint-btn:hover { color: var(--gdp-fg); }
+
+/* Small circular (i) info button, for a Bootstrap tooltip explaining a control. */
+.gdp-info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--gdp-muted);
+    color: var(--gdp-muted);
+    background: none;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    cursor: help;
+}
+.gdp-info-btn:hover, .gdp-info-btn:focus {
+    color: var(--gdp-fg);
+    border-color: var(--gdp-fg);
+}
+
+/* A wider page shell for layouts that need real side-by-side columns (e.g. the creator). */
+.gdp-page-wide { max-width: 1100px; }
+
+/* Two columns on wide screens (e.g. source image next to its preview); stacks on narrow ones. */
+.gdp-cols-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+@media (max-width: 760px) {
+    .gdp-cols-2 { grid-template-columns: 1fr; }
+}
+
+/* A non-modal slide-out panel (see shared/gdp-ui.js): no dark backdrop, so pair this with
+   data-bs-backdrop="false" on the offcanvas element itself. */
+.gdp-panel-flush {
+    background: var(--gdp-panel);
+    border-left: 1px solid var(--gdp-panel-border);
+}
+
+@media (max-width: 420px) {
+    .gdp-page { padding: 1rem 0.6rem 2.5rem; }
+    .gdp-header h1 { font-size: 1.6rem; }
+}
+
+/* Settings dock: the right-edge tab and the slide-out panel are ONE element, so the tab stays
+   attached to the drawer as it opens and closes. Closed, only the tab shows at the screen edge. */
+.gdp-settings-dock {
+  --gdp-tab-w: 2.6rem;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1050;
+  width: min(23rem, 100vw);
+  height: 100dvh;
+  transform: translateX(calc(100% - var(--gdp-tab-w)));
+  transition: transform 220ms ease;
+}
+.gdp-settings-dock.is-open { transform: translateX(0); }
+.gdp-settings-tab {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--gdp-tab-w);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  padding: 0.9rem 0.4rem;
+  background: var(--gdp-panel);
+  color: var(--gdp-fg);
+  border: 1px solid var(--gdp-panel-border);
+  border-right: none;
+  border-radius: var(--gdp-radius) 0 0 var(--gdp-radius);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+.gdp-settings-tab:hover, .gdp-settings-tab:focus-visible {
+  background: var(--gdp-accent);
+  color: #fff;
+  border-color: var(--gdp-accent);
+  outline: none;
+}
+.gdp-settings-panel {
+  position: absolute;
+  inset: 0 0 0 var(--gdp-tab-w);
+  overflow-y: auto;
+  background: var(--gdp-panel);
+  border-left: 1px solid var(--gdp-panel-border);
+}
+.gdp-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--gdp-panel-border);
+}
+.gdp-settings-body { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+@media (prefers-reduced-motion: reduce) { .gdp-settings-dock { transition: none; } }
+@media (max-width: 420px) { .gdp-settings-dock { --gdp-tab-w: 2.2rem; } }
+
+
+/* "Load latest version" button, present on every page (see shared/gdp-fresh.js). */
+.gdp-fresh-btn {
+  position: fixed; top: 0.6rem; right: 0.6rem; z-index: 1060;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.6rem 1.05rem; font-size: 1rem; font-weight: 700;
+  background: var(--gdp-panel); color: var(--gdp-fg);
+  border: 2px solid var(--gdp-accent); border-radius: var(--gdp-radius);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.18); cursor: pointer;
+}
+.gdp-fresh-btn:hover, .gdp-fresh-btn:focus-visible { background: var(--gdp-accent); color: #fff; outline: none; }
+.gdp-build-tag { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.02em; padding: 0.12rem 0.45rem; border-radius: 0.4rem; background: var(--gdp-accent); color: #fff; }
+.gdp-fresh-btn:hover .gdp-build-tag { background: #fff; color: var(--gdp-accent); }

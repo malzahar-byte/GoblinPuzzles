@@ -1,0 +1,26 @@
+#linkDiv, #errorDiv, #imageControls {
+    display: none;
+}
+
+#preview {
+    max-width: 100%;
+    background: #fff;
+    border: 1px solid #666;
+    border-radius: 0.3rem;
+    image-rendering: pixelated;
+}
+
+#cropCanvas {
+    max-width: 100%;
+    border: 1px solid #666;
+    border-radius: 0.3rem;
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+}
+
+#dropZone.dragover {
+    outline: 3px dashed var(--gdp-accent);
+    outline-offset: 4px;
+    border-radius: var(--gdp-radius);
+}

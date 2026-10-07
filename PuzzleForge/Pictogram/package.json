@@ -1,0 +1,25 @@
+{
+  "name": "pictogram",
+  "version": "1.0.0",
+  "description": "Turn a picture into a nonogram puzzle with a hidden message (static site, forked from sg-nonograms)",
+  "main": "js/creator.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon --exec http-server -c-i",
+    "test": "node dev-tools/test-roundtrip.mjs && node dev-tools/test-secret.mjs && node dev-tools/test-image.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RosimInc/sg-nonograms.git"
+  },
+  "author": "RosimInc",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/RosimInc/sg-nonograms/issues"
+  },
+  "homepage": "https://github.com/RosimInc/sg-nonograms#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "nodemon": "^3.1.9"
+  }
+}

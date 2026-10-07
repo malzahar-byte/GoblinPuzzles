@@ -1,0 +1,10 @@
+<!-- TEMPLATE — paste this EXACT line into the <head> of every page your puzzle has, right
+     after the opening <html data-bs-theme="dark"> tag, before any stylesheet or script.
+     Replace ONLY the key string (shown here as gdp-<PUZZLE>-settings) with the SAME string as
+     SETTINGS_KEY in your settings.js — copy it from there, don't retype it from memory.
+
+     Why this has to be inline and can't just import settings.js: it must run before the page's
+     first paint and before ES modules load, or the page flashes the wrong theme for a moment.
+     That's the ONLY reason this one string is allowed to exist outside settings.js — everywhere
+     else, import SETTINGS_KEY instead. -->
+<script>try{var s=JSON.parse(localStorage.getItem('gdp-<PUZZLE>-settings')||'{}');document.documentElement.setAttribute('data-bs-theme',s.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'))}catch(e){}</script>

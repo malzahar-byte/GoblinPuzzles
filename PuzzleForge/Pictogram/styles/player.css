@@ -1,0 +1,23 @@
+#msgDiv {
+    display: none;
+    text-align: center;
+}
+
+#timerDiv {
+    font-variant-numeric: tabular-nums;
+}
+
+#pointStatus {
+    font-size: 0.85rem;
+}
+
+.gdp-instructions-core li {
+    margin-bottom: 0.15rem;
+}
+
+#sizeValue {
+    color: var(--gdp-fg);
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
