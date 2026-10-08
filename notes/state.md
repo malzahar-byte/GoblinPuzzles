@@ -16,6 +16,20 @@ Nonogram puzzle (below); the Hashi click-on-bridge defect was fixed; a headless-
 gate now covers all seven pointer puzzles (incl. Pictogram); and `GDP_BUILD` / every `?v=` is `13.0.0logic`. The
 per-puzzle facts below are updated where they changed.
 
+## In flight (save-point state — updated at every commit, cleared when the work lands)
+
+- **Train Tracks** — `PuzzleForge/TrainTracks/js/traintracks-logic.js` only (WIP commit `139f84e`).
+  The loop builder works; **the solver reports 0 solutions on a valid board, so `generate()`
+  returns null** — mid-debug, `__ttDbg2` hooks still in the file. No board/player/creator/test/Forge
+  entry. Pick up at `solve()`.
+- **Crossword** — not started (no folder); research recorded in `backlog.md`.
+- **Docs for the 2026-10-08 round** — `testing.md`/`history.md`/`backlog.md` and the per-puzzle
+  sections below do not yet cover the reload/zoom fix, the shared settings panel, the fairer
+  generators or Nurikabe.
+- **Pictogram / Nonogram settings panel** — both still hand-wire the panel in `player.js` (old
+  markup, `boardSelect` id, no "Show grid"). They are on the shared board shell and shared palettes;
+  only this migration is missing. See `backlog.md`.
+
 ## shared/ — generic layer, reused by every puzzle
 
 Interfaces for these live in `interfaces/`: board adapter, link codec, palette chrome,

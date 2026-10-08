@@ -93,6 +93,13 @@ name or family. "I could not do X" is only allowed after you tried X once and sa
 - No GitHub access? Keep committing anyway — local commits are save points in your copy.
 - Push access (the combiner, or an agent working with the live repo)? Push after every commit too:
   `git push`. Save points should not exist only on one machine.
+- **Long jobs leave save points in flight, not only at the end.** The moment a new piece of work
+  exists and parses — a logic module before its board, a generator before its player — commit and
+  push it; a `WIP:` prefix is fine (`git commit -m "WIP TrainTracks: logic module, solver mid-debug"`).
+  A half-done module costs one fix after a crash; an uncommitted one costs the whole session.
+- Keep a short **In flight** block at the top of `notes/state.md` from the first save point of a long
+  job on: what is half-done and the exact place to pick it up. Update it at every save point, clear
+  it when the work lands. The next session reads it first.
 - To undo, never rewrite history — no `reset --hard`, no rebase, no force-push. Add a correcting
   commit or `git revert <sha>`.
 - A commit changes no files: the version stays frozen (R7) and the baseline contracts stay frozen

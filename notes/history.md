@@ -70,3 +70,24 @@ Append only; a correction is a new entry, never an edit.
   `dev-tools/browser-checks/click-solve.mjs` → 7/7 puzzles solve by clicking, no page errors —
   the Nonogram creator builds a 6×6 link that round-trips and decrypts. UNRUN: the two Pictogram
   sweeps (`test-image`, `test-roundtrip`), which cannot finish in this sandbox.
+
+## 2026-10-08 — Cloud_Logic_1 — session recovery: local runner verified, TrainTracks WIP saved, R15 extended
+
+- Pulled the owner's local test tool (`0657e23`): `Run-Local.cmd` + `dev-tools/local-runner.mjs` +
+  `package.json` + `.gitignore`. Verified here by running the runner headless: it serves the Forge on
+  127.0.0.1 with the heartbeat injection, `/__status` answers, the **Quick** job ran the real gate
+  (12 pass / 0 fail / 0 unrun) and wrote `TEST-RESULTS.md` exactly as designed. The Windows-only
+  parts (the `.cmd` double-click flow, driving the installed Chrome, the self-close on browser
+  close) cannot be run in this sandbox and are unverified here.
+- The 2026-10-08 work session ended mid-Train-Tracks with its logic module untracked. It is now
+  committed and pushed as `139f84e` (WIP): the loop builder works, but the solver reports 0
+  solutions on a valid loop, so `generate()` returns null; `__ttDbg2` debug hooks are still in the
+  file. No board/player/creator/test/Forge entry yet; Crossword not started.
+- **R15 extended** (owner request after the second lost session): long jobs must commit and push save
+  points *while in flight*, not only when finished, and `state.md` carries a short **In flight**
+  block updated at every save point (`notes/AGENTS.md` R15).
+- Correction to the reviewer's report: Pictogram and Nonogram **do** run on the shared board shell
+  (`shared/gdp-board.js` `mountBoard` + `createNonogramAdapter`) and on the shared palettes
+  (`BOARD_STYLES` re-exports the shared `PALETTES`). What they still hand-wire is the **settings
+  panel**: both pages predate `shared/gdp-settings-panel.js`, keep the old markup and the
+  `boardSelect` id, and lack the "Show grid" toggle. Finishing that migration is on the list.
