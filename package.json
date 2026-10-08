@@ -1,0 +1,10 @@
+{
+  "name": "goblinpuzzles-local",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-only tooling (Run-Local.cmd + dev-tools/local-runner.mjs). Not part of the published site. The single dependency is the browser library the click-solve test drives; it downloads no browser.",
+  "devDependencies": {
+    "playwright-core": "latest"
+  }
+}

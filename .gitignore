@@ -1,0 +1,4 @@
+# Local tooling only - never part of a version (Run-Local.cmd / dev-tools/local-runner.mjs)
+node_modules/
+package-lock.json
+TEST-RESULTS.md

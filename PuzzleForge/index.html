@@ -32,6 +32,20 @@ a.forge-box:hover, a.forge-box:focus-visible { border-color: var(--gdp-accent); 
     <div class="gdp-section-title mt-4">Test mode</div>
     <p class="gdp-muted small mb-2">One ready-to-open example of each working puzzle — no creating required. Just to look at how each one plays.</p>
     <div class="forge-grid" id="testGrid"></div>
+    <div id="localTestsWrap" hidden>
+        <div class="gdp-section-title mt-4">Local tests</div>
+        <div class="gdp-panel p-3">
+            <p class="gdp-muted small mb-2">Only in the copy opened via <strong>Run-Local.cmd</strong> on your PC - these run the real test scripts and save the result to <code>TEST-RESULTS.md</code> in the version folder.</p>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-job="quick">Quick tests</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-job="full">Full tests (slow)</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-job="browser">Browser tests</button>
+                <a class="btn btn-outline-secondary btn-sm" href="/TEST-RESULTS.md" target="_blank" rel="noopener">Open TEST-RESULTS.md</a>
+            </div>
+            <p class="gdp-muted small mb-2" id="localTestState">Idle.</p>
+            <pre class="gdp-muted small mb-0" id="localTestLog" style="max-height:14rem;overflow:auto;white-space:pre-wrap;"></pre>
+        </div>
+    </div>
 </div>
 <script type="module">
 import { applyTheme, setupThemeButton } from './js/util/settings.js?v=13.0.0logic';
@@ -89,6 +103,58 @@ for (const t of TEST_LINKS) {
   const tag = document.createElement('span'); tag.className = 'forge-tag'; tag.textContent = ready ? 'Play' : 'Not set';
   box.append(h, p, tag); testGrid.appendChild(box);
 }
+</script>
+<script>
+// Local tests: shown only when this page is served by dev-tools/local-runner.mjs (Run-Local.cmd).
+// On the published site the probe below 404s, so nothing appears there.
+(async () => {
+    let info = null;
+    try { info = await (await fetch('/__status', { cache: 'no-store' })).json(); } catch (e) { return; }
+    if (!info || !info.local) return;
+    const wrap = document.getElementById('localTestsWrap');
+    wrap.hidden = false;
+    const state = document.getElementById('localTestState');
+    const log = document.getElementById('localTestLog');
+    const buttons = [...wrap.querySelectorAll('button[data-job]')];
+    const LABELS = { quick: 'Quick tests', full: 'Full tests', browser: 'Browser tests' };
+    let polling = null;
+
+    async function poll() {
+        let s = null;
+        try { s = await (await fetch('/__status', { cache: 'no-store' })).json(); } catch (e) {
+            if (polling) { clearInterval(polling); polling = null; }
+            buttons.forEach(b => { b.disabled = false; });
+            state.textContent = 'Lost contact with the local runner.';
+            return;
+        }
+        const job = s.job;
+        if (job) log.textContent = job.output || '(running - no output yet)';
+        if (job && job.state !== 'running') {
+            if (polling) { clearInterval(polling); polling = null; }
+            buttons.forEach(b => { b.disabled = false; });
+            state.textContent = (job.exit === 0 ? 'PASS' : 'FAIL') + ' - ' + LABELS[job.name] + ' (exit ' + job.exit + '). Saved to TEST-RESULTS.md.';
+            log.scrollTop = log.scrollHeight;
+        }
+    }
+
+    async function start(name) {
+        buttons.forEach(b => { b.disabled = true; });
+        state.textContent = 'Running ' + LABELS[name] + '...';
+        log.textContent = 'Starting ' + LABELS[name] + '...';
+        let r = null;
+        try { r = await (await fetch('/__run?job=' + name)).json(); } catch (e) { r = { error: 'no answer from the local runner' }; }
+        if (r.error) {
+            state.textContent = 'Could not start: ' + r.error;
+            buttons.forEach(b => { b.disabled = false; });
+            return;
+        }
+        if (!polling) polling = setInterval(poll, 2000);
+        poll();
+    }
+
+    for (const b of buttons) b.addEventListener('click', () => start(b.dataset.job));
+    poll();
+})();
 </script>
 </body>
 </html>

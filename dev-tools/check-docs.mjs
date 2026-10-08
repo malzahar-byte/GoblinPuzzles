@@ -10,8 +10,11 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+// fileURLToPath, not new URL(...).pathname: the latter yields /C:/... on Windows, which
+// path.resolve then turns into a broken \C:\... root.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NOTES = path.join(ROOT, 'notes');
 const failures = [];
 const warnings = [];

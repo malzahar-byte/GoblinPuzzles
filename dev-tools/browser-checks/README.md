@@ -18,6 +18,13 @@ your environment.** If a script fails immediately on launch, that's almost certa
   display, instructions text present, no page errors, and the settings-panel "Clear saved
   progress" button only clears progress-prefixed keys, not settings (confirms the 2026-10-04
   fix). Usage: `node smoke-player.mjs <repo-root-abs-path> <port> <puzzle-id>`.
+- `../local-runner.mjs` — the local runner behind `Run-Local.cmd` at the folder root (the owner's
+  Windows double-click). Serves the folder on `127.0.0.1`, opens Chrome, shows the Forge "Local
+  tests" buttons, runs the quick / full / browser jobs and writes `TEST-RESULTS.md` at the folder
+  root; it stops itself when the browser it opened is closed. The browser job needs
+  `playwright-core` (one `npm install`, done by the .cmd) and a Chromium-based browser — Chrome or
+  Edge, auto-detected, or `CHROMIUM_PATH`; the other jobs need nothing.
+  Usage: `node dev-tools/local-runner.mjs [--port N] [--no-open]`.
 
 
 Everything else that previously accumulated here (screenshots, raw captured output, several
