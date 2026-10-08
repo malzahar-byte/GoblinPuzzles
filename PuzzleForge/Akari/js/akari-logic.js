@@ -10,6 +10,7 @@
 // between); every numbered wall must have exactly that many adjacent lamps.
 import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.0logic';
 import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.0logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.0logic';
 
 export const CELL = { EMPTY: 0, LAMP: 1, MARK: 2 };
 export const ACTION_TYPE = { CELL: 0 };
@@ -155,6 +156,61 @@ export function generate(R, C, rng = Math.random, opts = {}) {
 // ---- link ("the link is the save file") ----
 const solutionKey = (lamps) => bitsFrom(lamps);
 
+// ---- message-seeded links (version 2) ----
+//
+// The theme of the project: the same message, size and options must produce the same puzzle and the
+// same link. Nonogram gets that by hashing the message into its seed; Akari now does too. A
+// version-2 link stores the seed only — the board is rebuilt from it — and the message stays
+// XOR-locked against the solution that seed produces.
+//
+// NOTE: a version-2 link depends on generate() staying exactly as it is. If the generator is ever
+// changed, freeze a copy for this version, or old seeded links stop reproducing (the same rule
+// Pictogram's seed-based v1 links live under).
+export const LINK_VERSION = 2;
+
+// The options a seeded link is always built and rebuilt with: one value, used by both sides, so a
+// link can never be encoded with one set and regenerated with another.
+export const SEED_OPTS = { wallChance: 0.24, tries: 600 };
+
+export function seedFromMessage(message) {
+  return hash(Array.from(message).map(charToNum)) & 0x7fffffff;
+}
+
+export function generateFromSeed(R, C, seed, opts = SEED_OPTS) {
+  return generate(R, C, getRandomizer(seed), opts);
+}
+
+// The message hash, advanced until it yields a unique puzzle — deterministic for the same input.
+export function seedForMessage(R, C, message, tries = 4000) {
+  let seed = seedFromMessage(message);
+  for (let i = 0; i < tries; i++) {
+    if (generateFromSeed(R, C, seed)) return seed;
+    seed = (seed + 1) & 0x7fffffff;
+  }
+  return -1;
+}
+
+export function encodeSeededLink(R, C, seed, message, msgType = 0) {
+  const p = generateFromSeed(R, C, seed);
+  if (!p) throw new Error('No unique puzzle for this seed');
+  const res = solve(R, C, p.walls, p.nums, 2);
+  if (res.count !== 1 || res.aborted) throw new Error('Puzzle must have exactly one solution');
+  const enc = lockMessage(message, msgType, solutionKey(res.lamps));
+  const len = 6 + 3 + 6 + 6 + 31 + 1 + enc.length();
+  const gap = (6 - len % 6) % 6;
+  const b = new BitSeq().appendNum(LINK_VERSION - 1, 6).appendNum(gap, 3).appendNum(0, gap)
+    .appendNum(R - 3, 6).appendNum(C - 3, 6)
+    .appendNum(seed, 31).appendNum(msgType, 1).append(enc.get());
+  return b.getShuffled().toAlphas();
+}
+
+// What a creator calls: message (+ size) -> the link, deterministically.
+export function encodeFromMessage(R, C, message, msgType = 0) {
+  const seed = seedForMessage(R, C, message);
+  if (seed < 0) throw new Error('Could not seed a unique puzzle for this message at this size');
+  return encodeSeededLink(R, C, seed, message, msgType);
+}
+
 export function encodeLink(R, C, walls, nums, message, msgType = 0) {
   const res = solve(R, C, walls, nums, 2);
   if (res.count !== 1 || res.aborted) throw new Error('Puzzle must have exactly one solution');
@@ -172,9 +228,18 @@ export function encodeLink(R, C, walls, nums, message, msgType = 0) {
 export function parseLink(id) {
   const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
   const version = 1 + rd.readNum(6);
-  if (version !== 1) throw new Error('Unknown Akari link version ' + version);
+  if (version !== 1 && version !== LINK_VERSION) throw new Error('Unknown Akari link version ' + version);
   rd.readNum(rd.readNum(3));
   const R = rd.readNum(6) + 3, C = rd.readNum(6) + 3;
+  if (version === LINK_VERSION) {
+    // Seeded link: the board is rebuilt from the seed, never stored.
+    const seed = rd.readNum(31);
+    const msgType = rd.readNum(1);
+    const enc = new BitSeq(rd.read());
+    const p = generateFromSeed(R, C, seed);
+    if (!p) throw new Error('Seeded Akari link does not generate a puzzle');
+    return { version, R, C, walls: p.walls, nums: p.nums, seed, msgType, enc };
+  }
   const walls = rd.read(R * C).split('').map(Number);
   const nums = new Array(R * C).fill(-1);
   for (let i = 0; i < R * C; i++) if (walls[i]) nums[i] = rd.readNum(3);

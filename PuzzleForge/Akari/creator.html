@@ -28,7 +28,7 @@
 </div>
 <script type="module">
 import { CHAR_TO_NUM } from '../../shared/gdp-math-utils.js?v=13.0.0logic';
-import { generate, encodeLink } from './js/akari-logic.js?v=13.0.0logic';
+import { encodeFromMessage } from './js/akari-logic.js?v=13.0.0logic';
 import { setupFreshButton } from '../../shared/gdp-fresh.js?v=13.0.0logic';
 import { applyTheme } from './js/util/settings.js?v=13.0.0logic';
 applyTheme();
@@ -41,9 +41,9 @@ $('createBtn').addEventListener('click', () => {
   const secret = $('secret').value || 'Well done!';
   const bad = Array.from(secret).filter(ch => !CHAR_TO_NUM.has(ch));
   if (bad.length) { $('err').textContent = "Unsupported characters: " + Array.from(new Set(bad)).join(' '); $('err').style.display = 'block'; return; }
-  const p = generate(H, W, Math.random, { tries: 500 });
-  if (!p) { $('err').textContent = 'Could not generate a unique puzzle at this size — try again or a different size.'; $('err').style.display = 'block'; return; }
-  const id = encodeLink(p.R, p.C, p.walls, p.nums, secret, 0);
+  let id;
+  try { id = encodeFromMessage(H, W, secret, 0); }
+  catch (e) { $('err').textContent = 'Could not generate a unique puzzle at this size — try a different size.'; $('err').style.display = 'block'; return; }
   const here = location.href.split(/[?#]/)[0].replace(/[^/]*$/, '');
   const url = here + 'index.html?id=' + id;
   $('link').value = url; $('playLink').href = url; $('out').style.display = 'block';
