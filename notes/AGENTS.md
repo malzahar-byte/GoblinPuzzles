@@ -46,6 +46,9 @@ reading.
 **R2 — One home per fact.** If a fact already lives somewhere, write a pointer, not a copy. Rule →
 here; current fact → `state.md`; why → `decisions/`; plan → `backlog.md`; event → `history.md`;
 interface → `interfaces/`.
+Reasoning you produce — a research pass, a comparison with other implementations, an approach you
+rejected — belongs in `history.md` (why this round) and `backlog.md` (what to reuse later). It is
+never a new top-level document (R6).
 
 **R3 — Stay in scope.** Do your job. Anything else you notice gets one line in your return's
 `FOLLOW-UPS`, not a fix.
@@ -54,12 +57,17 @@ interface → `interfaces/`.
 `testing.md` ("What has already been run on this baseline"). A recorded result is a fact. Re-run a
 check only if your change touches the code it covers, or the owner asks — otherwise cite the
 recorded result and say which line you relied on. Never re-run something unchanged "just in case".
+Run nothing by default: answering a question, reading code, or a docs-only edit needs no test. The
+slow, browser and visual checks belong to the owner (R17), not to you.
 
 **R5 — Evidence, or say "unrun".** Name the check, run it, and report **pass / fail / unrun** plus
 what it did **not** cover. Never write "verified" without saying how. Source that "looks right" is
 not a result.
 
 **R6 — Renames, moves, splits and new documents need the owner first.**
+A new puzzle folder (`PuzzleForge/<Name>/`) copied from `shared/puzzle-template/` is the normal build
+flow, not a move — no approval needed. Research and reasoning never need a new document either:
+they go to `history.md` / `backlog.md` (R2).
 
 **R7 — The version is frozen for the round.** Do not change `GDP_BUILD` or any `?v=`. Only the
 combiner bumps it, once.
@@ -91,8 +99,10 @@ name or family. "I could not do X" is only allowed after you tried X once and sa
   any mistake costs minutes, not hours.
 - Your copy has no git history yet (a plain folder)? Run `git init` once, then commit as above.
 - No GitHub access? Keep committing anyway — local commits are save points in your copy.
-- Push access (the combiner, or an agent working with the live repo)? Push after every commit too:
-  `git push`. Save points should not exist only on one machine.
+- Push access (the combiner, or an agent working with the live repo)? Push after every commit too,
+  through the authenticated remote tool (`cloud_git push`), not a plain local `git push`.
+  **A commit is not a save point until it is on the remote.** Cloud sessions are rebuilt from
+  GitHub; a local-only commit is lost with the sandbox. Save points must never live on one machine.
 - **Long jobs leave save points in flight, not only at the end.** The moment a new piece of work
   exists and parses — a logic module before its board, a generator before its player — commit and
   push it; a `WIP:` prefix is fine (`git commit -m "WIP TrainTracks: logic module, solver mid-debug"`).
@@ -104,6 +114,22 @@ name or family. "I could not do X" is only allowed after you tried X once and sa
   commit or `git revert <sha>`.
 - A commit changes no files: the version stays frozen (R7) and the baseline contracts stay frozen
   (R8).
+
+**R16 — Answer first, tools second.** When the owner asks a question or for a report, the answer
+comes from `notes/`, the reasoning already visible in this conversation, and read-only inspection
+(`git status`, `git log`, `grep`, `sed`, `ls`) — no tests, no installs, no edits until the answer is
+delivered. "Check X" means look at X and report; fixing it is a separate instruction. Drifting off
+the asked task is the most expensive failure this project has: it is the one thing the owner cannot
+recover.
+
+**R17 — Test ownership: cheap for the agent, hard for the owner's runner.** The agent runs the fast
+Node gate (`node dev-tools/check-all.mjs`) when a change needs it, plus the one puzzle `test-*.mjs`
+that covers a touched logic file. Everything slow, browser-based or visual belongs to the owner
+through `Run-Local.cmd` (Quick / Full / Browser jobs in `dev-tools/local-runner.mjs`); results come
+back in `TEST-RESULTS.md`. Concretely: never reinstall a browser or Chromium libraries to run a
+check, never run a browser pass twice for the same change, never re-run a recorded check, and put a
+new hard test in the owner's runner rather than in your own sandbox loop. `testing.md` holds the
+split.
 
 ## Delivery format
 
