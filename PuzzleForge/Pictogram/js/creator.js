@@ -5,8 +5,7 @@ import { makeUniquelySolvable } from './util/puzzle-repair.js';
 import { applyTheme, setupThemeButton } from './util/settings.js';
 import { setupTooltips } from '../../../shared/gdp-ui.js';
 
-const RANDOM_MIN = 4;
-const RANDOM_MAX = 25;
+const MIN_GRID = 4;      // smallest rows/cols a picture puzzle can use (Random mode moved to Nonogram)
 const MAX_WORKING_SIDE = 1200; // uploaded images are shrunk to this many pixels on the longer side for processing
 const MIN_CROP_PX = 8;
 
@@ -48,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $("secretText").addEventListener("input", updateSecretStatus);
     updateSecretStatus();
     $("copyBtn").addEventListener("click", copyLink);
-    document.querySelectorAll("input[name='mode']").forEach(el => el.addEventListener("change", applyMode));
     $("imageFile").addEventListener("change", e => loadBlob(e.target.files[0]));
 
     $("preset").addEventListener("change", onPresetChanged);
@@ -71,10 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("resetCropBtn").addEventListener("click", () => { if (state.src) setCrop(fullCrop(), false, "whole"); });
     setupCropDrag();
     setupPasteAndDrop();
-    applyMode();
+    applySizeLimits();
 });
-
-const mode = () => document.querySelector("input[name='mode']:checked").value;
 
 function showError(msg) {
     const div = $("errorDiv");
@@ -82,18 +78,6 @@ function showError(msg) {
     div.style.display = msg ? "block" : "none";
 }
 
-function applyMode() {
-    const image = mode() === "image";
-    $("imageSection").style.display = image ? "block" : "none";
-    showError("");
-    if (image) {
-        applySizeLimits();
-        schedulePreview();
-    } else {
-        setLimits($("numRows"), $("rowsRange"), RANDOM_MIN, RANDOM_MAX);
-        setLimits($("numCols"), $("colsRange"), RANDOM_MIN, RANDOM_MAX);
-    }
-}
 
 function setLimits(input, label, min, max) {
     input.min = min;
@@ -111,8 +95,6 @@ function setupPasteAndDrop() {
         const files = Array.from(e.clipboardData?.files || []).filter(f => f.type.startsWith("image/"));
         if (files.length === 0) return; // normal text paste
         e.preventDefault();
-        $("modeImage").checked = true;
-        applyMode();
         loadBlob(files[0]);
     });
     document.addEventListener("dragover", e => {
@@ -124,8 +106,6 @@ function setupPasteAndDrop() {
         const file = Array.from(e.dataTransfer?.files || []).find(f => f.type.startsWith("image/"));
         if (!file) return;
         e.preventDefault();
-        $("modeImage").checked = true;
-        applyMode();
         loadBlob(file);
     });
 }
@@ -303,8 +283,8 @@ function sizesFor() {
 
 function applySizeLimits() {
     if (!state.src) {
-        setLimits($("numRows"), $("rowsRange"), RANDOM_MIN, img.MAX_GRID_SIZE);
-        setLimits($("numCols"), $("colsRange"), RANDOM_MIN, img.MAX_GRID_SIZE);
+        setLimits($("numRows"), $("rowsRange"), MIN_GRID, img.MAX_GRID_SIZE);
+        setLimits($("numCols"), $("colsRange"), MIN_GRID, img.MAX_GRID_SIZE);
         return;
     }
     const s = sizesFor();
@@ -333,7 +313,7 @@ function currentSize() {
 }
 
 function onSizeChanged(axis) {
-    if (mode() !== "image" || !state.src) return;
+    if (!state.src) return;
     const s = sizesFor();
     let cols = clamp(parseInt($("numCols").value, 10) || s.cols, s.minC, s.maxC);
     let rows = clamp(parseInt($("numRows").value, 10) || s.rows, s.minR, s.maxR);
@@ -364,7 +344,7 @@ function onPresetChanged() {
 // ---------- preview + solvability ----------
 
 function schedulePreview() {
-    if (mode() !== "image" || !state.src) return;
+    if (!state.src) return;
     clearTimeout(state.timer);
     state.result = null;
     state.token++;                       // cancels any check that is still running
@@ -374,7 +354,7 @@ function schedulePreview() {
 }
 
 function updatePreview() {
-    if (mode() !== "image" || !state.src) return null;
+    if (!state.src) return null;
     const { cols, rows } = currentSize();
     const c = state.crop;
     const key = [state.preset, c.x, c.y, c.w, c.h, cols, rows, state.sharpen].join("|");
@@ -521,23 +501,14 @@ async function createNonogram() {
         }
     }
 
-    let id;
-    if (mode() === "image") {
-        if (!state.src) { showError("Please choose an image first."); return; }
-        if (state.timer) { clearTimeout(state.timer); state.timer = null; updatePreview(); } // apply a change made a moment ago
-        for (let i = 0; i < 3 && !state.result && state.pending; i++) await state.pending;
-        if (!state.result || !state.result.solved) {
-            showError("The picture isn't ready. Wait for the green \"Ready\" message, or change the style, Black amount or size.");
-            return;
-        }
-        id = nono.generateNonogramFromGrid(state.result.grid, secretText, msgType);
-    } else {
-        let numRows = parseInt($("numRows").value, 10);
-        let numCols = parseInt($("numCols").value, 10);
-        if (isNaN(numRows) || numRows < RANDOM_MIN || numRows > RANDOM_MAX) numRows = 10;
-        if (isNaN(numCols) || numCols < RANDOM_MIN || numCols > RANDOM_MAX) numCols = 10;
-        id = nono.generateNonogram(numRows, numCols, secretText, msgType);
+    if (!state.src) { showError("Please choose an image first."); return; }
+    if (state.timer) { clearTimeout(state.timer); state.timer = null; updatePreview(); } // apply a change made a moment ago
+    for (let i = 0; i < 3 && !state.result && state.pending; i++) await state.pending;
+    if (!state.result || !state.result.solved) {
+        showError("The picture isn't ready. Wait for the green \"Ready\" message, or change the style, Black amount or size.");
+        return;
     }
+    const id = nono.generateNonogramFromGrid(state.result.grid, secretText, msgType);
 
     const linkCmp = $("link");
     const link = nono.getPageURL(id);

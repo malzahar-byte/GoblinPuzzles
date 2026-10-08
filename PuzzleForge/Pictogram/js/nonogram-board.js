@@ -183,6 +183,17 @@ export function createNonogramAdapter({ model, getPalette, getMarkStyle }) {
             return null;
         },
 
+        // Test hook (dev-tools/browser-checks/click-solve.mjs): board-pixel centre of every black
+        // solution cell. A left click fills EMPTY/WHITE -> BLACK, so one click per black cell.
+        solverClicks(solution) {
+            const out = [];
+            for (let row = 0; row < model.numRows; row++)
+                for (let col = 0; col < model.numCols; col++)
+                    if (solution[row][col] === 1)
+                        out.push({ x: gridX + (col + 0.5) * CELL, y: gridY + (row + 0.5) * CELL, button: 'left' });
+            return out;
+        },
+
         apply: (a) => model.apply(a),
         unapply: (a) => model.unapply(a),
         isSolved: () => model.isSolved()

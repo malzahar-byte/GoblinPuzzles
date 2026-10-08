@@ -11,6 +11,11 @@ player pages render with no page errors and open the settings dock; and Akari, S
 Binairo and Futoshiki solve by clicking their solution and reveal the correct message. Pictogram's
 roundtrip Node test times out in this sandbox (no assertion failure produced).
 
+Source note for v13_Logic (Cloud_Logic_1, 2026-10-08): Pictogram's "Random" mode became the new
+Nonogram puzzle (below); the Hashi click-on-bridge defect was fixed; a headless-browser click-solve
+gate now covers all seven pointer puzzles (incl. Pictogram); and `GDP_BUILD` / every `?v=` is `13.0.0logic`. The
+per-puzzle facts below are updated where they changed.
+
 ## shared/ — generic layer, reused by every puzzle
 
 Interfaces for these live in `interfaces/`: board adapter, link codec, palette chrome,
@@ -42,21 +47,39 @@ settings/progress, secret lock, asset versioning.
 - Player: 60×60 max, compressed versioned links (v1/v2/v3), 10 themes, 5 board styles, X/dot
   marks, auto-fit zoom, undo/redo, save point, timer, saved progress, settings panel, secret
   message reveal.
+
 - Rendering is the shared SVG board shell. `js/player.js` is wire-up; the model is
   `js/nonogram-model.js` (pure, no DOM); the view is `js/nonogram-board.js`. **p5 is removed.**
-- **Limits:** wheel zoom at 60×60 ~30 fps under software rendering (real GPU unmeasured). No Node
-  test covers `nonogram-model.js` yet. `dev-tools/test-roundtrip.mjs` times out in this sandbox and
-  is not run by the gate (`--slow` runs it).
+- **Picture-only since v13_Logic:** the "Random" mode was split out into `PuzzleForge/Nonogram/`
+  (below); `creator.html` no longer offers a Random choice.
+- **Limits:** wheel zoom at 60×60 ~30 fps under software rendering (real GPU unmeasured).
+  `dev-tools/test-roundtrip.mjs` times out in this sandbox and is not run by the gate
+  (`--slow` runs it). `nonogram-model.js` now has a Node test (`dev-tools/test-nonogram-model.mjs`).
+
+## PuzzleForge/Nonogram/ — new in v13_Logic (split from Pictogram's Random mode)
+
+- Random seed-based nonograms with a secret message; same SVG board, same message lock, same link
+  format as Pictogram. Nothing is copied: `js/nonogram-logic.js` re-exports Pictogram's
+  `nonogram-model.js`, `util/nono-utils.js` and `util/id-parser.js` by relative path, and
+  `js/nonogram-board.js` re-exports Pictogram's adapter — so rules, look and link format cannot
+  drift apart.
+- `index.html` + `js/player.js` (auto-generates a 10×10 when no `id` is given), `creator.html` +
+  `js/creator.js` (rows/cols 4–25 + secret → link), `js/util/settings.js` (own key
+  `gdp-nonogram-settings`, progress prefix `gdp-nonogram:`), and `dev-tools/test-nonogram.mjs`.
+- The link format is Pictogram's seed-based v1, so a random-nonogram link opens in either player.
+- **Verified 2026-10-08:** renders, solves by clicking and reveals the message; the creator builds a
+  working link (a 6×6 test id round-trips and decrypts to its secret).
 
 ## PuzzleForge/Hashi/ — draft, on the shared shell
 
 - Random generation, 5–14 grid, plain-text secret. Board SVG from `js/board.js`, mounted by the
   shared shell. Board chrome from `resolveChrome()`.
-- **Known defect (2026-10-06):** clicking exactly on an existing bridge does nothing — the visible
-  bridge line sits over the hit area and `hitTest` uses `ev.target.closest('[data-i]')`, so the
-  target has no `data-i`. Clicking ~6 px beside the line works, and the puzzle solves and reveals
-  its message. Fix is a `proposed` backlog item.
-- Node test `dev-tools/test-hashi.mjs` covers `hashi-logic.js` only.
+- **Click-on-bridge fixed (v13_Logic, 2026-10-08):** `hitTest` now hit-tests by position (distance
+  from the click point to each edge segment) instead of `ev.target.closest('[data-i]')` — the old
+  code lost any click that landed on the visible bridge line sitting over the transparent hit line.
+  Node test `dev-tools/test-board-hit.mjs` covers it, and the browser click-solve gate proves it
+  end to end by clicking exact bridge midpoints.
+- Node test `dev-tools/test-hashi.mjs` covers `hashi-logic.js`.
 
 ## PuzzleForge/Akari/ — built (reference "puzzle kit")
 
@@ -78,8 +101,8 @@ settings/progress, secret lock, asset versioning.
 ## PuzzleForge/ — landing page
 
 `index.html` lists every puzzle with status, links the live and in-progress ones, and has a Test
-Mode section with ready examples for Pictogram, Hashi and Akari. 11 boxes, 9 links, all resolving
-(2026-10-06). **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
+Mode section with a ready example for every playable puzzle (Pictogram, Nonogram, Hashi, Akari,
+Skyscrapers, Binairo, Futoshiki). 12 boxes, 7 links, all resolving (v13_Logic, 2026-10-08). **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
 from `…/GoblinPuzzles/PuzzleForge/`.
 
 ## dev-tools/
@@ -91,9 +114,12 @@ from `…/GoblinPuzzles/PuzzleForge/`.
   hardcoded outside its `settings.js`, pages not reaching `gdp-settings.js`/`gdp-theme.css`.
 - `check-docs.mjs` — the notes contract: required docs, the top-level cap, `interfaces/` and
   `tracks/` present, decision references and local links resolve.
-- `browser-checks/` — `static-server.mjs`, `p5stub.js`, `smoke-player.mjs`, `README.md`, and the
-  standalone SVG benchmark. **`smoke-player.mjs` is stale** — it opens the old `/Pictogram/` path,
-  which 404s; fix is a `proposed` backlog item.
+- `browser-checks/` — `static-server.mjs`, `p5stub.js`, `smoke-player.mjs`, `README.md`, the
+  standalone SVG benchmark, and **`click-solve.mjs`** — the v13 click-solve gate: it opens one
+  Test-Mode link per pointer puzzle, asks the page for a click plan via its
+  `window.__gdpSolverClicks()` hook, dispatches real pointer events and checks the solved message
+  appears. It needs `PLAYWRIGHT_PATH` / `CHROMIUM_PATH` (see `browser-checks/README.md`).
+  `smoke-player.mjs` is still **stale** — it opens the old `/Pictogram/` path, which 404s.
 
 ## Site-wide known limits
 

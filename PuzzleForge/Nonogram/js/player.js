@@ -1,34 +1,38 @@
-// Pictogram player. The board is drawn by the shared SVG shell (shared/gdp-board.js) through
-// Pictogram's adapter; the puzzle rules live in nonogram-model.js. This file is the wire-up:
-// settings/theme, the timer, save points, the toolbar, and the secret message.
+// Nonogram player. The rules, model and look live in Pictogram's pure modules, re-exported
+// through ../js/nonogram-logic.js and nonogram-board.js; this file is the wire-up, adapted from
+// Pictogram/js/player.js (timer, save points, toolbar, settings, message — all same behaviour).
 //
-// p5.js is no longer used. No behaviour changed: same clicks, same drag rules, same hint
-// check-offs, same undo/redo, same save points, same timer rule, same secret message.
+// Key differences from Pictogram's player are only:
+//  - empty id -> generate a RANDOM nonogram here and stay on THIS page (Pictogram keeps its
+//    picture-creator flow; Random mode lives in Nonogram — notes/backlog.md);
+//  - settings/progress keys are Nonogram's own (gdp-nonogram-*), so progress never mixes;
+//  - "Create" returns to the Forge, and the build label is Nonogram's.
 
-import * as nono from './util/nono-utils.js?v=13.0.0logic';
-import * as idParser from './util/id-parser.js?v=13.0.0logic';
-import { BOARD_STYLES, buildPalette } from './util/board-styles.js?v=13.0.0logic';
-import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js?v=13.0.0logic';
-import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js?v=13.0.0logic';
-import { mountBoard } from '../../../shared/gdp-board.js?v=13.0.0logic';
-import { setupFreshButton } from '../../../shared/gdp-fresh.js?v=13.0.0logic';
-import { createModel } from './nonogram-model.js?v=13.0.0logic';
-import { createNonogramAdapter } from './nonogram-board.js?v=13.0.0logic';
+import * as nono from './nonogram-logic.js';
+import { BOARD_STYLES, buildPalette } from './nonogram-board.js';
+import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js';
+import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js';
+import { mountBoard } from '../../../shared/gdp-board.js';
+import { setupFreshButton } from '../../../shared/gdp-fresh.js';
+import { createModel } from './nonogram-logic.js';
+import { createNonogramAdapter } from './nonogram-board.js';
 
 let id = new URLSearchParams(window.location.search).get('id');
 
 // ----- puzzle -----
+
+const RANDOM_MIN = 4;    // Pictogram's creator used the same bounds for Random mode
+const RANDOM_MAX = 25;
 
 function loadPuzzle() {
     if (!id) {
         id = nono.generateNonogram(10, 10, null, 0);
         window.history.pushState({}, '', `${window.location.pathname}?id=${id}`);
     }
-    const infos = idParser.parseId(id);
+    const infos = nono.parseId(id);
     const [horHints, verHints] = nono.getPuzzleFromInfos(infos);
     return { numRows: infos.numRows, numCols: infos.numCols, horHints, verHints, enc: infos.enc, msgType: infos.msgType };
 }
-
 const puzzle = loadPuzzle();
 const model = createModel(puzzle);
 let palette = null;
@@ -127,7 +131,7 @@ function loadCheckpoint() {
     showPointStatus('Save point loaded.');
 }
 
-// ----- timer (unchanged rule: counts only while the tab is visible AND focused) -----
+// ----- timer (same rule as Pictogram: counts only while the tab is visible AND focused) -----
 
 let timerStarted = false, timerElapsed = 0, timerLast = 0, timerSavedAt = 0;
 const windowActive = () => !document.hidden && document.hasFocus();
@@ -214,8 +218,8 @@ function reset() {
     board.clearHistory();
     board.render();
 }
-function clearPictogramProgress() {
-    const ok = confirm('Clear saved progress?\n\nThis deletes your progress, timers and save points for ALL Pictogram puzzles on this device. Your settings are kept. This cannot be undone.');
+function clearNonogramProgress() {
+    const ok = confirm('Clear saved progress?\n\nThis deletes your progress, timers and save points for ALL Nonogram puzzles on this device. Your settings are kept. This cannot be undone.');
     if (!ok) return;
     for (const key of Object.keys(localStorage)) if (key.startsWith(PROGRESS_PREFIX)) localStorage.removeItem(key);
     reset();
@@ -228,7 +232,7 @@ function setupButtons() {
     document.getElementById('zoomInBtn').addEventListener('click', () => board.zoomIn());
     document.getElementById('zoomOutBtn').addEventListener('click', () => board.zoomOut());
     document.getElementById('resetBtn').addEventListener('click', reset);
-    document.getElementById('clearProgressBtn').addEventListener('click', clearPictogramProgress);
+    document.getElementById('clearProgressBtn').addEventListener('click', clearNonogramProgress);
     document.getElementById('saveBtn').addEventListener('click', saveCheckpoint);
     document.getElementById('loadBtn').addEventListener('click', loadCheckpoint);
     updateCheckpointButton();

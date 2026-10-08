@@ -18,7 +18,22 @@ export function createHashiAdapter({ W, H, islands, edges, solution, getChrome, 
             islands.forEach((s,k)=>{const full=total[k]===s.n,over=total[k]>s.n; nodes+='<circle cx="'+cx(s)+'" cy="'+cy(s)+'" r="'+R+'" fill="'+(full?st.islandFull:st.island)+'" stroke="'+(over?st.over:st.islandStroke)+'" stroke-width="2.5"/><text x="'+cx(s)+'" y="'+(cy(s)+5.5)+'" text-anchor="middle" font-size="16" font-weight="700" fill="'+(full?st.textFull:st.text)+'">'+s.n+'</text>';});
             return backdrop(st)+hit+bridges+nodes;
         },
-        hitTest(pt,phase,startAction,ev){ if(phase!=='down') return null; const el=ev.target.closest&&ev.target.closest('[data-i]'); if(!el) return null; const i=Number(el.dataset.i), next=(val[i]+1)%3; if(next>0&&edges[i].cross.some(j=>val[j]>0)) return null; return {type:'bridge',i,from:val[i],to:next}; },
+        hitTest(pt,phase,startAction,ev){ if(phase!=='down') return null;
+            // Hit-test by position (interfaces/board-adapter.md): distance from pt to each edge's
+            // segment, pick the nearest within HIT/2. ev.target is not used — the visible bridge
+            // lines sit above the transparent hit lines and swallowed clicks on an existing bridge.
+            let best=-1,bestD=HIT/2;
+            edges.forEach((e,i)=>{const A=islands[e.a],B=islands[e.b];const x1=cx(A),y1=cy(A),x2=cx(B),y2=cy(B);
+                const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy;
+                let t=len2?((pt.x-x1)*dx+(pt.y-y1)*dy)/len2:0; t=t<0?0:t>1?1:t;
+                const px=x1+t*dx-pt.x,py=y1+t*dy-pt.y,d=Math.sqrt(px*px+py*py);
+                if(d<bestD){bestD=d;best=i;}});
+            if(best<0) return null;
+            const i=best, next=(val[i]+1)%3; if(next>0&&edges[i].cross.some(j=>val[j]>0)) return null; return {type:'bridge',i,from:val[i],to:next}; },
+        // Test hook (dev-tools/browser-checks/click-solve.mjs): midpoint of each solution edge.
+        // Clicking these exact points is what the 2026-10-06 hit-area defect broke; it is also
+        // the regression proof for the position-based hitTest.
+        solverClicks(){ const out=[]; edges.forEach((e,i)=>{ for (let k = 0; k < solution[i]; k++) { const A=islands[e.a],B=islands[e.b]; out.push({x:(cx(A)+cx(B))/2,y:(cy(A)+cy(B))/2,button:'left'}); } }); return out; },
         apply:a=>{val[a.i]=a.to}, unapply:a=>{val[a.i]=a.from}, isSolved:()=>val.every((v,i)=>v===solution[i]), encodeState:()=>val.join(''), decodeState:s=>{for(let i=0;i<val.length;i++)val[i]=(s.charCodeAt(i)-48)||0}, hasAny:()=>val.some(v=>v>0), reset:()=>val.fill(0)
     };
 }

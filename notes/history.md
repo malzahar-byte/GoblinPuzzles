@@ -39,3 +39,34 @@ Append only; a correction is a new entry, never an edit.
   push access also `git push` after every commit, so save points do not live on one machine.
 - Undo is a correcting commit or `git revert`; never `reset --hard`, rebase or force-push. Commits
   change no files, so the version (R7) and baseline contracts (R8) stay frozen.
+
+## 2026-10-08 — Cloud_Logic_1 — v13_Logic: Nonogram split, Hashi bridge fix, click-solve gate
+
+- **Pictogram is picture-only.** The "Random" mode left Pictogram's creator (the mode radios are
+  gone) and became its own puzzle, `PuzzleForge/Nonogram/`: `index.html` + `js/player.js` (auto-builds
+  a 10×10 when no `id` is given), `creator.html` + `js/creator.js` (rows/cols 4–25 + secret → link),
+  `js/util/settings.js` (own key `gdp-nonogram-settings`, progress prefix `gdp-nonogram:`). Nothing
+  is duplicated: `js/nonogram-logic.js` re-exports Pictogram's model/generator/codec and
+  `js/nonogram-board.js` re-exports Pictogram's adapter, so the link format stays Pictogram-v1 and a
+  random-nonogram link opens in either player.
+- **Hashi click-on-bridge fixed.** `Hashi/js/board.js` `hitTest` now measures the distance from the
+  click point to each edge segment instead of reading `ev.target` — the old code lost any click that
+  landed on the visible bridge line drawn over the transparent hit line. New Node test
+  `Hashi/dev-tools/test-board-hit.mjs`.
+- **"Does each puzzle solve by clicking" gate added:** `dev-tools/browser-checks/click-solve.mjs`
+  (real headless Chromium, real pointer events) with a per-puzzle `window.__gdpSolverClicks()` hook.
+  Pictogram, Hashi, Akari, Skyscrapers, Binairo, Futoshiki and Nonogram all pass.
+- **Missing tests added:** `Pictogram/dev-tools/test-nonogram-model.mjs` (the model test the backlog
+  asked for) and `Nonogram/dev-tools/test-nonogram.mjs`.
+- **Rules review:** all six puzzles compared with the published rules. No rule is broken; the
+  differences (Pictogram random density 40–80%, Futoshiki's all-signs generator, Hashi's silent
+  illegal-click, the cosmetic "0" hint) are recorded in `backlog.md`.
+- **Unreleased-puzzle research:** KenKen, Nurikabe, Slitherlink, Train Tracks, Crossword and Chained
+  mode — best implementation and pitfalls — recorded in `backlog.md`.
+- **Forge:** `index.html` gained a Nonogram entry and one Test-Mode link per playable puzzle.
+- **Version:** `GDP_BUILD` and every `?v=` bumped `12.0.0` → `13.0.0logic`, by owner direction for
+  this round (normally the combiner's job — see the two freezing rules in `AGENTS.md`).
+- RAN: `node dev-tools/check-all.mjs` → 11 pass, 0 fail, 0 unrun (2 slow not run) —
+  `dev-tools/browser-checks/click-solve.mjs` → 7/7 puzzles solve by clicking, no page errors —
+  the Nonogram creator builds a 6×6 link that round-trips and decrypts. UNRUN: the two Pictogram
+  sweeps (`test-image`, `test-roundtrip`), which cannot finish in this sandbox.

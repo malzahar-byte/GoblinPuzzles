@@ -1,5 +1,5 @@
 // Akari adapter for the shared board shell. Board colours come from shared resolveChrome().
-import { CELL, ACTION_TYPE, isSolved as ruleSolved } from './akari-logic.js?v=12.0.0';
+import { CELL, ACTION_TYPE, isSolved as ruleSolved } from './akari-logic.js?v=13.0.0logic';
 const M = 6, CS = 40;
 export function createAkariAdapter({ R, C, walls, nums, getGrid, getChrome }) {
   const cells = new Array(R * C).fill(CELL.EMPTY);
@@ -14,6 +14,8 @@ export function createAkariAdapter({ R, C, walls, nums, getGrid, getChrome }) {
       return out; },
     hover(_w,pt){const cell=cellAt(pt);if(!cell)return'';const chrome=getChrome?getChrome():null;const h=chrome?chrome.over:'var(--gdp-muted)';return `<rect x="${M+cell.col*CS}" y="${M+cell.row*CS}" width="${CS}" height="${CS}" fill="${h}" opacity="0.18"/>`;},
     hitTest(pt,phase,gesture){const cell=cellAt(pt);if(phase==='down'){if(!cell)return null;const i=cell.row*C+cell.col;if(walls[i])return null;const to=nextState(cells[i],pt.button);return to===cells[i]?null:{type:ACTION_TYPE.CELL,i,from:cells[i],to};}if(!gesture||gesture.type!==ACTION_TYPE.CELL||!cell)return null;const i=cell.row*C+cell.col;if(walls[i])return null;if(pt.button==='touch')return cells[i]!==gesture.to?{type:ACTION_TYPE.CELL,i,from:cells[i],to:gesture.to}:null;return cells[i]===gesture.from?{type:ACTION_TYPE.CELL,i,from:cells[i],to:gesture.to}:null;},
+    // Test hook (dev-tools/browser-checks/click-solve.mjs): board-pixel centre of each solution lamp.
+    solverClicks(solution){ const out=[]; for(let i=0;i<R*C;i++) if(solution[i]) out.push({x:M+(i%C)*CS+CS/2,y:M+((i/C)|0)*CS+CS/2,button:'left'}); return out; },
     apply:a=>{cells[a.i]=a.to}, unapply:a=>{cells[a.i]=a.from}, isSolved:()=>ruleSolved(R,C,walls,nums,cells), encodeState:()=>cells.join(''), decodeState:s=>{for(let i=0;i<cells.length;i++)cells[i]=(s.charCodeAt(i)-48)||0}, hasAny:()=>cells.some(v=>v!==CELL.EMPTY), reset:()=>cells.fill(CELL.EMPTY), lamps:()=>cells.map(v=>v===CELL.LAMP?1:0)
   };
 }

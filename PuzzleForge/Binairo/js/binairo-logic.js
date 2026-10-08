@@ -11,8 +11,8 @@
 // balance and vertical triples as each row lands and rejecting duplicate rows immediately.
 // Columns are completed only by the last row, so duplicate columns are checked there.
 // An ABORTED search means "unknown" and is never treated as proof of uniqueness.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=12.0.0';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=12.0.0';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.0logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.0logic';
 
 export const CELL = { EMPTY: 0, ZERO: 1, ONE: 2 };
 
