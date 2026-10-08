@@ -18,7 +18,10 @@ import http from 'http';
 import path from 'path';
 
 const PLAYWRIGHT_PATH = process.env.PLAYWRIGHT_PATH || '';
-const { chromium } = await import(PLAYWRIGHT_PATH || 'playwright-core');
+// Playwright is CommonJS: a bare package resolves with named exports, but an explicit
+// PLAYWRIGHT_PATH that points at index.js can arrive as { default: ... } instead. Handle both.
+const pw = await import(PLAYWRIGHT_PATH || 'playwright-core');
+const chromium = pw.chromium || (pw.default && pw.default.chromium);
 const CHROMIUM_PATH = process.env.CHROMIUM_PATH || undefined;
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.ico': 'image/x-icon' };
@@ -44,6 +47,7 @@ const PLANNERS = {
     Binairo: `() => window.__gdpSolverClicks()`,
     Futoshiki: `() => window.__gdpSolverClicks()`,
     Nonogram: `() => window.__gdpSolverClicks()`,
+    Nurikabe: `() => window.__gdpSolverClicks()`,
 };
 
 // Same links as PuzzleForge/index.html TEST_LINKS (the Test Mode examples the owner keeps there).
@@ -55,6 +59,7 @@ const TESTS = [
     ['Binairo', '/PuzzleForge/Binairo/index.html?id=IeqUb-UsJEgNoQQGcb_XI-Eskk-c'],
     ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=--d_-O_ig-Vco-qoo-o-M-i-gggdk-F-dE-ci_-sa-_gaa_'],
     ['Nonogram', '/PuzzleForge/Nonogram/index.html?id=EkjCQkVo_E1zztIsWQNdH2j2pF'],
+    ['Nurikabe', '/PuzzleForge/Nurikabe/index.html?id=-g-g--ccFqi-s-qa-kE----Ea-agEpEgio-olaK-_E-qQ------Eca--d-IcdacF-g-uF-Fg---'],
 ];
 
 const [root, portArg] = [process.argv[2], process.argv[3]];
@@ -62,7 +67,10 @@ const port = +(portArg || 8791);
 if (!root) { console.error('Usage: node click-solve.mjs <repo-root-abs-path> [port]'); process.exit(2); }
 
 const server = await serve(root, port);
-const browser = await chromium.launch(CHROMIUM_PATH ? { executablePath: CHROMIUM_PATH, args: ['--no-sandbox'] } : { args: ['--no-sandbox'] });
+// --disable-dev-shm-usage: /dev/shm is small in containers and Chromium dies with SIGTRAP
+// when it runs out (seen repeatedly in this sandbox). Harmless on a normal machine.
+const LAUNCH_ARGS = ['--no-sandbox', '--disable-dev-shm-usage'];
+const browser = await chromium.launch(CHROMIUM_PATH ? { executablePath: CHROMIUM_PATH, args: LAUNCH_ARGS } : { args: LAUNCH_ARGS });
 const page = await browser.newPage();
 // The board can be taller/wider than the default 1280x720 viewport; a click outside the viewport
 // is never delivered, which silently drops the outer rows/columns. Make room for the whole board.
