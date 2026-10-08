@@ -98,7 +98,7 @@ function saveTimer() { timerSavedAt = performance.now(); try { localStorage.setI
 function loadTimer() { timerStarted = false; timerElapsed = 0; try { const s = JSON.parse(localStorage.getItem(progressKey('#time')) || 'null'); if (s) { timerElapsed = s.e || 0; timerStarted = s.s == 1; } } catch (e) {} if (!timerStarted && adapter.hasAny()) timerStarted = true; timerLast = performance.now(); }
 function tickTimer() { const now = performance.now(); if (timerStarted && !adapter.isSolved() && windowActive()) timerElapsed += now - timerLast; timerLast = now; renderTimer(); if (timerStarted && now - timerSavedAt > 3000) saveTimer(); }
 function saveState() { if (adapter.isSolved()) return; try { localStorage.setItem(progressKey(), adapter.encodeState()); } catch (e) {} }
-function loadState() { const s = localStorage.getItem(progressKey()); if (s) adapter.decodeState(s); loadTimer(); if (adapter.isSolved()) showMessage(); }
+function loadState() { const s = localStorage.getItem(progressKey()); if (s) adapter.decodeState(s); loadTimer(); board.render(); board.refreshSolved(); if (adapter.isSolved()) showMessage(); }
 function updateCheckpointButton() { const b = $('loadBtn'); if (b) b.disabled = !localStorage.getItem(checkpointKey()); }
 function pointStatus(t) { const el = $('pointStatus'); el.textContent = t; clearTimeout(pointStatus.t); pointStatus.t = setTimeout(() => { el.textContent = ''; }, 2500); }
 function saveCheckpoint() { if (adapter.isSolved()) return; try { localStorage.setItem(checkpointKey(), JSON.stringify({ state: adapter.encodeState(), time: Math.round(timerElapsed), started: timerStarted })); } catch (e) {} updateCheckpointButton(); pointStatus('Save point saved.'); }

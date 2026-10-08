@@ -59,8 +59,13 @@ export function mountBoard(container, adapter, opts = {}) {
         svg.setAttribute('height', Math.round(world.height * zoom));
     }
     function fit() {
-        const avail = root.clientWidth || world.width;
-        setZoom(avail / world.width);
+        // Fit the WHOLE board inside the box, not just its width. The board box caps its height
+        // (gdp-board.css max-height), so fitting width alone left every board cropped on open:
+        // the player had to zoom out or scroll before they could see all of it.
+        const availW = root.clientWidth || world.width;
+        const maxH = parseFloat(getComputedStyle(root).maxHeight);
+        const availH = Number.isFinite(maxH) ? maxH : world.height;
+        setZoom(Math.min(availW / world.width, availH / world.height));
     }
     function zoomIn() { setZoom(zoom * ZOOM_STEP); }
     function zoomOut() { setZoom(zoom / ZOOM_STEP); }
@@ -171,6 +176,9 @@ export function mountBoard(container, adapter, opts = {}) {
 
     return {
         root, svg, render, fit, zoomIn, zoomOut, undo, redo, clearHistory,
+        // Call after restoring saved progress that decodes straight into the adapter: the shell
+        // locked at mount time, before the restore, so a restored-solved board must be re-locked.
+        refreshSolved: () => { ended = adapter.isSolved(); },
         getZoom: () => zoom,
         isSolved: () => ended
     };
