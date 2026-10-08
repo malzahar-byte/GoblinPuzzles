@@ -16,19 +16,29 @@ Nonogram puzzle (below); the Hashi click-on-bridge defect was fixed; a headless-
 gate now covers all seven pointer puzzles (incl. Pictogram); and `GDP_BUILD` / every `?v=` is `13.0.0logic`. The
 per-puzzle facts below are updated where they changed.
 
+Source note for the v13_Logic second round (2026-10-08, owner review): the reload-renders-unsolved
+defect and the board-opens-cropped defect were both fixed; every puzzle moved onto the one shared
+settings panel; Binairo's rules text gained the three-in-a-row ban and its generator gained a
+hand-solvability filter; Futoshiki's generator now emits as few signs as still keep the solution
+unique; Skyscrapers gained clickable row/column solve ticks; Nurikabe shipped. Rules R16 (answer
+first) and R17 (test ownership) were added, and R15 now requires a save point to reach the remote.
+The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser checks.
+
 ## In flight (save-point state — updated at every commit, cleared when the work lands)
 
 - **Train Tracks** — `PuzzleForge/TrainTracks/js/traintracks-logic.js` only (WIP commit `139f84e`).
-  The loop builder works; **the solver reports 0 solutions on a valid board, so `generate()`
-  returns null** — mid-debug, `__ttDbg2` hooks still in the file. No board/player/creator/test/Forge
-  entry. Pick up at `solve()`.
-- **Crossword** — not started (no folder); research recorded in `backlog.md`.
-- **Docs for the 2026-10-08 round** — `testing.md`/`history.md`/`backlog.md` and the per-puzzle
-  sections below do not yet cover the reload/zoom fix, the shared settings panel, the fairer
-  generators or Nurikabe.
+  The loop builder works; **`solve()` reports 0 solutions on a valid loop, so `generate()` returns
+  null** — mid-debug, `__ttDbg2` hooks still in the file. No board/player/creator/test/Forge entry.
+  Pick up at `solve()`.
+- **Message-deterministic generation** — Nonogram/Pictogram derive their seed from the message;
+  Hashi, Akari, Skyscrapers, Binairo, Futoshiki and Nurikabe use `Math.random` and store the board
+  in the link, so the same message does not reproduce the same puzzle. The owner says it matters.
+  Plan in `backlog.md`.
 - **Pictogram / Nonogram settings panel** — both still hand-wire the panel in `player.js` (old
   markup, `boardSelect` id, no "Show grid"). They are on the shared board shell and shared palettes;
   only this migration is missing. See `backlog.md`.
+- **Crossword** — not started; blocked on one decision: it has no unique solution, so invariant 4
+  cannot apply as-is. Options in `backlog.md`.
 
 ## shared/ — generic layer, reused by every puzzle
 
@@ -47,6 +57,9 @@ settings/progress, secret lock, asset versioning.
   large, accented control on every page, including creator pages.
 - `gdp-secret.js` — shared XOR secret lock; see `interfaces/secret-lock.md`.
 - `gdp-ui.js` — `setupSettingsDock(dock)` (Escape/outside-click close); no Bootstrap needed.
+- `gdp-settings-panel.js` — `setupBoardSettingsPanel(opts)`: the one settings panel (themes, board
+  style, board background, show grid, timer, clear progress). Six puzzle pages call it; only
+  Pictogram and Nonogram still hand-wire their own markup (see the In-flight block).
 - `gdp-bitseq.js`, `gdp-math-utils.js` — bit-level encode/decode, character set, seeded shuffle.
 - `gdp-board.js` + `gdp-board.css` — the shared SVG board shell; see
   `interfaces/board-adapter.md`. The board box is the only scroller.
@@ -110,13 +123,30 @@ settings/progress, secret lock, asset versioning.
 - Size caps: Skyscrapers 4–9, Futoshiki 4–8, Binairo even 6–12.
 - **Verified 2026-10-06:** the three player pages render, open settings, and solve by clicks →
   message revealed. (Earlier "shipped broken / unverified" notes are superseded.)
+- **Second round (2026-10-08):** Skyscrapers' rows and columns can be clicked to mark a line solved
+  (like nonogram hint lines) and its generator no longer ships a puzzle below a given-count floor;
+  Binairo's rules text now states the no-three-in-a-row ban and the generator rejects boards a human
+  cannot start; Futoshiki's generator drops signs while the solution stays unique, so a board no
+  longer shows a sign on every edge.
 - **KenKen** specced, not built.
+
+## PuzzleForge/Nurikabe/ — live (added 2026-10-08)
+
+- `js/nurikabe-logic.js` (pure: sea-first generator, limit-2 uniqueness proof, link codec, secret),
+  `js/nurikabe-board.js` (shared-shell adapter, position-based hit-test), player inlined in
+  `index.html`, `creator.html`, `js/util/settings.js`, `dev-tools/test-nurikabe.mjs`. Caps:
+  `MAX_SIZE` 12, `MAX_ISLAND` 15. Published rules implemented: a clue cell belongs to an island of
+  exactly its number, one clue per island, islands never touch orthogonally, and the sea is one
+  connected region with no 2×2 block.
+- **Verified 2026-10-08:** renders, solves by clicking in the click-solve gate and reveals
+  "Cloud Logic 1".
 
 ## PuzzleForge/ — landing page
 
 `index.html` lists every puzzle with status, links the live and in-progress ones, and has a Test
 Mode section with a ready example for every playable puzzle (Pictogram, Nonogram, Hashi, Akari,
-Skyscrapers, Binairo, Futoshiki). 12 boxes, 7 links, all resolving (v13_Logic, 2026-10-08). **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
+Skyscrapers, Binairo, Futoshiki). 12 entries, 8 Test-Mode links (Pictogram, Nonogram, Hashi, Akari, Skyscrapers, Binairo,
+Futoshiki, Nurikabe), all resolving (2026-10-08). **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
 from `…/GoblinPuzzles/PuzzleForge/`.
 
 ## dev-tools/
@@ -134,10 +164,18 @@ from `…/GoblinPuzzles/PuzzleForge/`.
   `window.__gdpSolverClicks()` hook, dispatches real pointer events and checks the solved message
   appears. It needs `PLAYWRIGHT_PATH` / `CHROMIUM_PATH` (see `browser-checks/README.md`).
   `smoke-player.mjs` is still **stale** — it opens the old `/Pictogram/` path, which 404s.
+- **Owner's local runner (not part of a version):** `Run-Local.cmd` + `dev-tools/local-runner.mjs`
+  + `package.json` + `.gitignore`. Double-clicking it serves the folder on `127.0.0.1`, opens the
+  Forge in the owner's Chrome, adds a "Local tests" section with **Quick** (the gate), **Full** (the
+  gate, then the two slow Pictogram sweeps with no timeout) and **Browser** (all 8 playable puzzles
+  solved by real clicks) buttons, and writes `TEST-RESULTS.md` at the folder root. Its only
+  dependency is `playwright-core` (no browser download) and it drives the installed Chrome/Edge; the
+  window closes when the browser does. In-flight jobs are never interrupted. See `testing.md`.
 
 ## Site-wide known limits
 
-- This agent sandbox has internet, so CDN Bootstrap loads; Playwright + headless Chromium are
-  available. (An earlier sandbox had no internet and could not load Bootstrap.)
+- A restored agent sandbox has no browser tooling (Playwright and Chromium were gone after the last
+  restore) and R17 says not to reinstall it for a check. The browser checks are the owner's, through
+  `Run-Local.cmd`; their result comes back in `TEST-RESULTS.md`.
 - No CI. The gate is run by whoever is finishing.
 - The published site root 404s (see the Forge section).

@@ -25,6 +25,22 @@ would only teach people to ignore the table. Their standing is recorded in `stat
 It covers logic, docs and wiring. It does **not** open a browser; UI behaviour still needs the
 browser check below, run by hand.
 
+## Who runs what (R17)
+
+Two people run checks: the agent, and the owner through the local runner. Keep them apart.
+
+- **Agent, in its sandbox:** the fast Node gate and the one `test-*.mjs` that covers a touched
+  logic file. Nothing else by default — answering a question or a docs-only edit runs nothing.
+- **Owner, at the pc:** `Run-Local.cmd` (folder root) opens the Forge with a "Local tests" section:
+  **Quick** = the gate, **Full** = the gate plus the two slow Pictogram sweeps with no time limit,
+  **Browser** = all playable puzzles solved by real clicks in the installed Chrome/Edge. Results are
+  written to `TEST-RESULTS.md` at the folder root and copied back to the agent.
+- **The agent never installs a browser** (or Chromium libraries, fonts, `.deb` sets) to run a check,
+  never runs a browser pass twice for one change, and never re-runs a recorded result (R4/R17).
+
+A new hard check belongs in the runner's jobs (`dev-tools/local-runner.mjs`, `JOBS`), so the owner
+can press a button for it, rather than in the agent's own sandbox loop.
+
 ## Kinds of check
 
 1. **Puzzle Node tests** (`PuzzleForge/<Puzzle>/dev-tools/test-*.mjs`) — link encoding, solving,
@@ -34,16 +50,17 @@ browser check below, run by hand.
    keys, no broken relative imports, every page reaches `gdp-settings.js`/`gdp-theme.css`. Run it
    whenever you touch a puzzle's settings/theme wiring, add a puzzle, or move a folder.
 3. **`check-docs.mjs`** — the `notes/` contract. Run it whenever you touch documentation.
-4. **A real headless browser** (Playwright + headless Chromium — available in this sandbox, which
-   also has internet) — the only way to check rendering, the settings dock, and real click/drag.
-   Use it for any UI change; it is overkill for a pure logic change.
+4. **A real browser** — the only way to check rendering, the settings dock and real click/drag. By
+   R17 this is the owner's job: the runner's **Browser** button (or a hand pass). The agent reaches
+   for it only if a browser happens to be installed already; it does not install one.
 5. **`dev-tools/browser-checks/click-solve.mjs`** — the automatic "does each puzzle solve by
    clicking" gate. It opens one Test-Mode link per pointer puzzle, asks the page for a click plan
    through its `window.__gdpSolverClicks()` hook, dispatches real pointer events and checks the
    solved message appears. Faster to run than a hand pass and the right check after touching a
    `*-board.js` or a player page. Needs `PLAYWRIGHT_PATH` / `CHROMIUM_PATH` (see
    `browser-checks/README.md`); run it from the repo root:
-   `node dev-tools/browser-checks/click-solve.mjs <repo-root-abs-path> [port]`.
+   `node dev-tools/browser-checks/click-solve.mjs <repo-root-abs-path> [port]`. The owner never runs
+   this by hand — the runner's Browser job calls it with the port and `CHROMIUM_PATH` filled in.
 
 ## Which to run for a change
 
@@ -55,7 +72,8 @@ browser check below, run by hand.
 | Any puzzle's `*-logic.js` | that puzzle's `test-*.mjs` |
 | `*-board.js`, `gdp-board.js`, page HTML/CSS, palette chrome, `gdp-fresh.js` | `click-solve.mjs` (solve → message), plus a hand pass for drag-paint, zoom, undo/redo, palette contrast and the `v13.0.0logic` label |
 | `Pictogram/js/nonogram-model.js` | `Pictogram/dev-tools/test-nonogram-model.mjs` |
-| Anything at all, when finishing | `check-all.mjs` |
+| Anything at all, when finishing | `check-all.mjs` (agent) |
+| Slow, browser or visual | **Owner**: `Run-Local.cmd` — Full / Browser jobs |
 
 ## What has already been run on this baseline
 
@@ -85,11 +103,15 @@ The v12 rows below are still valid where their code did not change. The v13_Logi
 | `Nonogram/test-nonogram.mjs` | v13_Logic, 2026-10-08 | pass |
 | `browser-checks/click-solve.mjs` — Pictogram, Hashi, Akari, Skyscrapers, Binairo, Futoshiki, Nonogram | v13_Logic, 2026-10-08 | pass — 7/7 solve by clicks, message shown, no page errors |
 | Pictogram creator loads (picture-only, no mode radios); Nonogram creator builds a 6×6 link that round-trips and decrypts | v13_Logic, 2026-10-08 | pass, no page errors |
+| `browser-checks/click-solve.mjs` — all 8 playable puzzles incl. Nurikabe | v13_Logic, 2026-10-08 | pass — 8/8 solve by clicks, message shown, no page errors |
+| `Nurikabe/test-nurikabe.mjs` | v13_Logic, 2026-10-08 | pass |
+| Owner's local runner, **Quick** job (serves, injects heartbeat, runs the gate, writes `TEST-RESULTS.md`) | 2026-10-08, from the agent sandbox | pass — gate reported 12 pass / 0 fail / 0 unrun; the Windows-only parts are the owner's |
 
 ## Known sandbox limits
 
-- Playwright + headless Chromium work; this sandbox has internet, so CDN Bootstrap loads. (An
-  earlier sandbox had no internet and could not load it; re-confirm if the environment changes.)
+- A restored agent sandbox has **no browser tooling** — after the last restore Playwright and
+  Chromium were both gone. R17 says do not reinstall them for a check; the browser checks are the
+  owner's. The gate itself needs nothing but Node.
 - `dev-tools/browser-checks/smoke-player.mjs` is **stale** — it opens the old `/Pictogram/` path
   and throws. Do not rely on it; use `click-solve.mjs` instead.
 - `click-solve.mjs` needs its Chromium shared libraries and fonts present; after a sandbox restore

@@ -91,3 +91,26 @@ Append only; a correction is a new entry, never an edit.
   (`BOARD_STYLES` re-exports the shared `PALETTES`). What they still hand-wire is the **settings
   panel**: both pages predate `shared/gdp-settings-panel.js`, keep the old markup and the
   `boardSelect` id, and lack the "Show grid" toggle. Finishing that migration is on the list.
+
+## 2026-10-08 — Cloud_Logic_1 — rules round: R16/R17, save points must reach the remote, docs catch-up
+
+- Owner review after two sessions ended off-script. New **R16 (answer first, tools second)**: when the
+  owner asks a question or for a report, answer from `notes/`, the reasoning already in the
+  conversation and read-only inspection — no tests, installs or edits until the answer is delivered.
+  New **R17 (test ownership)**: the agent runs the fast Node gate and the one test covering a touched
+  logic file; every slow, browser or visual check is the owner's, through `Run-Local.cmd` (Quick /
+  Full / Browser jobs). Never reinstall a browser or Chromium libraries to run a check.
+- **R15 amended:** a commit is not a save point until it is on the remote (`cloud_git push`), because
+  cloud sessions are rebuilt from GitHub — a local-only commit dies with the sandbox. **R2/R6:**
+  research and reasoning go to `history.md`/`backlog.md`; a new top-level document is never the
+  answer. **R4 broadened:** run nothing by default and nothing "just in case". **R6 relaxed:** a new
+  puzzle folder copied from `shared/puzzle-template/` is the normal build flow.
+- **Docs catch-up for the 2026-10-08 round** (the previous session's facts were not written down):
+  `state.md` gained the second-round source note, the fixed reload/cropped-open defects, the shared
+  settings panel (`shared/gdp-settings-panel.js`), the fairer generators, Skyscrapers' solve ticks, a
+  Nurikabe section, the owner's local runner under `dev-tools/`, and 8 Test-Mode links;
+  `testing.md` gained **Who runs what (R17)**, the runner's jobs, and the new recorded rows
+  (click-solve 8/8 incl. Nurikabe; `Nurikabe/test-nurikabe.mjs`; the runner's Quick job);
+  `backlog.md` marks Nurikabe done, Train Tracks doing, Crossword blocked on its lock question, and
+  carries the owner-review round section.
+- RAN: `node dev-tools/check-docs.mjs` → pass. Pushed to `main` (`620f310` rules, this commit docs).

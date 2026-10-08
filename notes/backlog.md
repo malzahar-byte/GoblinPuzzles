@@ -70,10 +70,14 @@ Don't start anything not marked `approved`.
 - `proposed` — Version the remaining unversioned local imports inside the Pictogram and Hashi
   creator modules.
 - `proposed` — Extract a shared link-header helper (5 codecs repeat the framing) — needs approval (R6).
-- `proposed` — Nurikabe (hardest to generate).
+- `done` — **Nurikabe built.** Sea-first generator, limit-2 uniqueness proof, board/player/creator,
+  test and Forge entry. → `state.md`.
 - `proposed` — Slitherlink (consult `decisions/0001`'s pzpr.js notes).
-- `proposed` — Crossword generator.
-- `proposed` — Train Tracks.
+- `blocked` — **Crossword generator:** blocked on the owner deciding how the message lock maps onto
+  a puzzle that has no unique solution (invariant 4). Options: fixed word list with a stored
+  solution; solution stored in the link; or drop the message. → `state.md` In flight.
+- `doing` — **Train Tracks:** logic module only; the loop builder works, `solve()` returns 0
+  solutions on a valid loop. → `state.md` In flight.
 - `proposed` — Chained mode.
 - `proposed` — Picture-to-Numberlink (separate, harder project).
 
@@ -93,7 +97,7 @@ the differences are quality/polish, recorded here for later:
   usual 50–60%; high density plus a uniform shuffle makes many tiny runs, harder hint rows, and is
   the main cost of the uniqueness repair (the slow Pictogram sweeps). Lower or bias the range when
   Nonogram's generation is next touched.
-- `proposed` — **Futoshiki draws an inequality between every adjacent pair** (`deriveIneq`), so the
+- `done` — **Futoshiki no longer draws an inequality between every adjacent pair** (`deriveIneq`), so the
   board shows more signs than a human editor would. The puzzle stays unique, so this is polish: drop
   a sign while the remaining set is still unique.
 - `proposed` — **Hashi silently ignores an illegal bridge click** (returns `null`). Add a brief
@@ -120,3 +124,26 @@ adapter, unique generator, BitSeq codec, shared secret lock):
   the data-shape pitfall.
 - `proposed` — **Chained mode:** a shell over several links (hash the chain into one URL, step N to
   advance); version the chain format so old chains keep decoding.
+
+## Owner review round (2026-10-08)
+
+- `done` — **Reload renders the saved state** (board no longer appears unsolved until the first
+  click) and **the board opens fitted** instead of cropped/zoomed-in. → `state.md`, `history.md`.
+- `done` — **One settings panel everywhere:** `shared/gdp-settings-panel.js` (themes, board style,
+  board background, show grid, timer, clear progress). Six pages call it. → `state.md`.
+- `done` — **Skyscrapers:** clicking a row/column number marks that line solved (nonogram style);
+  generator given a floor so a 4×4 is not a hard grid; the Skyscrapers Test-Mode link was replaced
+  with an easier 4×4. → `state.md`.
+- `done` — **Binairo:** rules text now states the no-three-in-a-row ban; the generator rejects
+  boards a human cannot start. → `state.md`.
+- `doing` — **Message-deterministic generation.** Nonogram/Pictogram already derive the seed from the
+  message; Hashi, Akari, Skyscrapers, Binairo, Futoshiki and Nurikabe must do the same, with the link
+  carrying the seed instead of the board (new link version; old links keep decoding). The owner
+  confirmed this is a theme of the project, not a nicety. → `state.md` In flight.
+- `doing` — **Pictogram/Nonogram migrate to `shared/gdp-settings-panel.js`** (both still hand-wire
+  their panel markup and lack "Show grid"). → `state.md` In flight.
+- `done` — **Rules R16 (answer first) and R17 (test ownership)** added; R15 now says a commit is not
+  a save point until it reaches the remote, and research/reasoning lives in `history.md`/`backlog.md`
+  instead of a new document. → `AGENTS.md`.
+- `approved` — **Nurikabe, Train Tracks and Crossword after the two in-flight items** (owner
+  direction for this mission; Crossword only once its lock question is answered).
