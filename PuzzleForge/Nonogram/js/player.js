@@ -66,6 +66,12 @@ function setupSettings() {
     showTimerCheck.checked = settings.showTimer !== false;
     showTimerCheck.addEventListener('change', () => { saveSettings({ showTimer: showTimerCheck.checked }); renderTimer(); });
 
+    const surfaceCheck = document.getElementById('surfaceCheck');
+    if (surfaceCheck) {
+        surfaceCheck.checked = settings.surface !== false;
+        surfaceCheck.addEventListener('change', () => { saveSettings({ surface: surfaceCheck.checked }); board.render(); });
+    }
+
     applyTheme();
     setupThemeButton(document.getElementById('themeBtn'), () => { applyPalette(); board.render(); });
     applyPalette();
@@ -251,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     showBoardSize();
 
-    const adapter = createNonogramAdapter({ model, getPalette, getMarkStyle });
+    const adapter = createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface: () => loadSettings().surface !== false });
     // Click-solve test hook (dev-tools/browser-checks/click-solve.mjs): centre of each black cell.
     window.__gdpSolverClicks = () => adapter.solverClicks(nono.solveNonogram(puzzle.horHints, puzzle.verHints));
     board = mountBoard(document.getElementById('nonoDiv'), adapter, {

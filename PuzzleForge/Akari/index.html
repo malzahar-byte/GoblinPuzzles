@@ -17,6 +17,7 @@
       <div><div class="gdp-section-title mt-0">Appearance</div>
         <button type="button" id="themeBtn" class="btn btn-outline-secondary btn-sm mb-2 w-100"></button>
         <label class="form-label small mb-1" for="boardStyleSelect">Board style</label><select id="boardStyleSelect" class="form-select form-select-sm mb-2"></select>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="surfaceCheck"><label class="form-check-label" for="surfaceCheck">Show board background</label></div>
         <div class="form-check"><input class="form-check-input" type="checkbox" id="gridCheck"><label class="form-check-label" for="gridCheck">Show grid</label></div>
       </div>
       <div><div class="gdp-section-title">On-screen display</div>
@@ -49,22 +50,21 @@
 <script type="module">
 import { loadSettings, saveSettings, applyTheme, setupThemeButton, currentTheme, PROGRESS_PREFIX } from './js/util/settings.js?v=13.0.0logic';
 import { setupSettingsDock } from '../../shared/gdp-ui.js?v=13.0.0logic';
+import { setupBoardSettingsPanel } from '../../shared/gdp-settings-panel.js?v=13.0.0logic';
 import { setupFreshButton } from '../../shared/gdp-fresh.js?v=13.0.0logic';
 import { mountBoard } from '../../shared/gdp-board.js?v=13.0.0logic';
 import { parseLink, decryptMessage, solve } from './js/akari-logic.js?v=13.0.0logic';
 import { createAkariAdapter } from './js/akari-board.js?v=13.0.0logic';
-import { PALETTES, resolveChrome } from '../../shared/gdp-palettes.js?v=13.0.0logic';
+import { resolveChrome } from '../../shared/gdp-palettes.js?v=13.0.0logic';
 const $ = id => document.getElementById(id);
 let info;
 try { info = parseLink(new URLSearchParams(location.search).get('id') || ''); }
 catch (e) { $('boardWrap').textContent = "This link isn't a valid Akari puzzle."; throw e; }
 const { R, C, walls, nums } = info;
 $('size').innerHTML = '<b>' + C + ' × ' + R + '</b> <span class="small">(columns × rows)</span>';
-applyTheme();
-setupThemeButton($('themeBtn'), () => board.render());
 setupSettingsDock($('settingsDock'));
 setupFreshButton($('freshBtn'));
-const adapter = createAkariAdapter({ R, C, walls, nums, getGrid: () => loadSettings().grid !== false, getChrome: () => resolveChrome(loadSettings().boardStyle, currentTheme()) });
+const adapter = createAkariAdapter({ R, C, walls, nums, getGrid: () => loadSettings().grid !== false, getSurface: () => loadSettings().surface !== false, getChrome: () => resolveChrome(loadSettings().boardStyle, currentTheme()) });
 // Click-solve test hook (dev-tools/browser-checks/click-solve.mjs): centre of each solution lamp.
 window.__gdpSolverClicks = () => adapter.solverClicks(solve(R, C, walls, nums).lamps);
 const progressKey = (s = '') => PROGRESS_PREFIX + (new URLSearchParams(location.search).get('id') || '') + s;
@@ -101,9 +101,5 @@ $('resetBtn').addEventListener('click', reset);
 $('saveBtn').addEventListener('click', saveCheckpoint);
 $('loadBtn').addEventListener('click', loadCheckpoint);
 $('clearProgressBtn').addEventListener('click', () => { if (!confirm('Clear saved progress?\n\nDeletes progress, timers and save points for ALL Akari puzzles on this device. Settings are kept. This cannot be undone.')) return; for (const k of Object.keys(localStorage)) if (k.indexOf(PROGRESS_PREFIX) === 0) localStorage.removeItem(k); reset(); updateCheckpoint(); pointStatus('Saved progress cleared.'); });
-const gridCheck = $('gridCheck'); gridCheck.checked = loadSettings().grid !== false;
-gridCheck.addEventListener('change', () => { saveSettings({ grid: gridCheck.checked }); board.render(); });
-const styleSel = $('boardStyleSelect'); for (const [k,s] of Object.entries(PALETTES)) { const o=document.createElement('option'); o.value=k; o.textContent=s.label; styleSel.appendChild(o); } styleSel.value=PALETTES[loadSettings().boardStyle] ? loadSettings().boardStyle : 'classic'; styleSel.addEventListener('change', () => { saveSettings({ boardStyle: styleSel.value }); board.render(); });
-const showTimerCheck = $('showTimerCheck'); showTimerCheck.checked = loadSettings().showTimer !== false;
-showTimerCheck.addEventListener('change', () => { saveSettings({ showTimer: showTimerCheck.checked }); renderTimer(); });
+setupBoardSettingsPanel({ load: loadSettings, save: saveSettings, applyTheme, setupThemeButton, render: () => board.render(), renderTimer });
 </script></body></html>

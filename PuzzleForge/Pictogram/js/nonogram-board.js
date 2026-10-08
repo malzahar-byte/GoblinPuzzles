@@ -11,7 +11,7 @@ import { CELL_MARK, ACTION_TYPE } from './nonogram-model.js';
 const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
 const rgba = (c) => `rgba(${c[0]},${c[1]},${c[2]},${(c[3] ?? 255) / 255})`;
 
-export function createNonogramAdapter({ model, getPalette, getMarkStyle }) {
+export function createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface }) {
     const MARGIN = 12;
     const CELL = 30;
     const CROSS = CELL / 6;
@@ -122,7 +122,8 @@ export function createNonogramAdapter({ model, getPalette, getMarkStyle }) {
         render() {
             const palette = getPalette();
             const bg = rgb(model.ended ? palette.solvedBg : palette.bg);
-            return `<rect x="0" y="0" width="100%" height="100%" fill="${bg}"/>`
+            const backdrop = (getSurface && getSurface()) ? `<rect x="0" y="0" width="100%" height="100%" fill="${bg}"/>` : '';
+            return backdrop
                 + drawCells(palette) + drawMarks(palette) + drawLines(palette) + drawHints(palette);
         },
 

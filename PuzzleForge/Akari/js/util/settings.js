@@ -5,7 +5,7 @@ const KEY = 'gdp-akari-settings';
 export const SETTINGS_KEY = KEY;
 export const PROGRESS_PREFIX = 'gdp-akari:';
 
-const DEFAULTS = { theme: null, grid: true, showTimer: true, boardStyle: 'classic' };
+const DEFAULTS = { theme: null, surface: true, grid: true, showTimer: true, boardStyle: 'classic' };
 const store = createSettingsStore(KEY, DEFAULTS);
 
 export const loadSettings = store.load;

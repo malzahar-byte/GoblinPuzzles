@@ -8,7 +8,7 @@ const KEY = 'gdp-nonogram-settings';
 export const SETTINGS_KEY = KEY; // the ONLY place this string is allowed to be written
 export const PROGRESS_PREFIX = 'gdp-nonogram:'; // every saved-progress key starts with this
 
-const DEFAULTS = { theme: null, board: 'classic', mark: 'x', showTimer: true };
+const DEFAULTS = { theme: null, board: 'classic', mark: 'x', surface: true, showTimer: true };
 const store = createSettingsStore(KEY, DEFAULTS);
 
 export const loadSettings = store.load;
