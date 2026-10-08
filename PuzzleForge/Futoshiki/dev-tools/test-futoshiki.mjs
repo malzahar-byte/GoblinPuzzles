@@ -17,6 +17,18 @@ for (let i = 0; i < M; i++) {
   check('roundtrip ineqH #' + i, q.ineqH.join(',') === p.ineqH.join(','));
   check('roundtrip ineqV #' + i, q.ineqV.join(',') === p.ineqV.join(','));
   check('decrypt #' + i, fut.decryptMessage(q.enc, q.msgType, p.solution) === 'Fut ' + i);
+  // A published Futoshiki shows a sparse set of signs, not one between every neighbouring pair
+  // (owner report, 2026-10-08), and no single sign may be droppable (the generator's dedupe).
+  const signs = p.ineqH.filter(Boolean).length + p.ineqV.filter(Boolean).length;
+  check('signs are sparse #' + i + ' (' + signs + '/' + (2 * N * (N - 1)) + ')', signs <= N * (N - 1));
+  const redundant = (t, k) => {
+    const save = t[k]; t[k] = 0;
+    const r = fut.solve(p.N, p.givens, p.ineqH, p.ineqV, 2);
+    t[k] = save;
+    return !r.aborted && r.count === 1;
+  };
+  check('no redundant H sign #' + i, !p.ineqH.some((v, k) => v && redundant(p.ineqH, k)));
+  check('no redundant V sign #' + i, !p.ineqV.some((v, k) => v && redundant(p.ineqV, k)));
 }
 console.log(`generated ${made}/${M} Futoshiki puzzles`);
 console.log(fails === 0 ? 'All Futoshiki checks passed.' : `${fails} failure(s).`);

@@ -16,6 +16,9 @@ for (let i = 0; i < M; i++) {
   check('roundtrip givens #' + i, q.givens.join(',') === p.givens.join(','));
   check('roundtrip clues #' + i, ['top','bottom','left','right'].every(d => q.clues[d].join(',') === p.clues[d].join(',')));
   check('decrypt #' + i, sky.decryptMessage(q.enc, q.msgType, p.solution) === 'Sky ' + i);
+  // Every generated board keeps a few given numbers so a player has a starting point
+  // (owner report 2026-10-08: a 4x4 with no numbers at all felt unreasonably hard).
+  check('givens floor #' + i, p.givens.filter(Boolean).length >= Math.max(2, Math.round(N * N * 0.12)));
 }
 console.log(`generated ${made}/${M} Skyscrapers puzzles`);
 console.log(fails === 0 ? 'All Skyscrapers checks passed.' : `${fails} failure(s).`);

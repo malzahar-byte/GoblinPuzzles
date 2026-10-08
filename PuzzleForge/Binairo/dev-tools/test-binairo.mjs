@@ -1,6 +1,6 @@
 // Binairo tests: solver counts, generator uniqueness, link round-trip, decrypt.
 // The 8x8 case MUST finish quickly now — the old column-only-at-the-leaf check made it time out.
-import { solve, generate, encodeLink, parseLink, decryptMessage, isSolved, CELL } from '../js/binairo-logic.js';
+import { solve, generate, encodeLink, parseLink, decryptMessage, isSolved, logicSolvable, CELL } from '../js/binairo-logic.js';
 
 let bad = 0;
 const check = (name, ok) => { if (!ok) { bad++; console.log('FAIL', name); } };
@@ -22,6 +22,15 @@ for (let r = 0; r < N6; r++) for (let c = 0; c < N6; c++) givens6[r * N6 + c] = 
 check('full 6x6 grid is a valid solution', isSolved(N6, givens6, grid6.flat().map(v => v === 1 ? CELL.ONE : CELL.ZERO)));
 check('full 6x6 grid solves uniquely', solve(N6, givens6, 2).count === 1);
 
+// The owner's 6x6 Test-Mode link (EiNrgooiGgpNaziN-cgIcqEZFpQuuoh-) has exactly one solution
+// but cannot be finished with the three rules — the "are our 6x6 boards just too hard?" report
+// (2026-10-08). It stays a valid puzzle; the generator simply no longer ships boards like it.
+{
+    const hard = parseLink('EiNrgooiGgpNaziN-cgIcqEZFpQuuoh-');
+    check('old 6x6 test link still parses and is unique', hard.N === 6 && solve(hard.N, hard.givens, 2).count === 1);
+    check('old 6x6 test link is NOT hand-solvable (the report)', logicSolvable(hard.N, hard.givens) === false);
+}
+
 // Generation across sizes; the 8x8 one is the regression.
 for (const N of [6, 8, 10]) {
     const before = Date.now();
@@ -31,6 +40,9 @@ for (const N of [6, 8, 10]) {
     if (!p) continue;
     const res = solve(N, p.givens, 2);
     check(`${N}x${N} puzzle has exactly one solution`, res.count === 1 && !res.aborted);
+    // Every shipped board must be finishable with the three rules a player uses; uniqueness
+    // alone allowed boards that need a guess.
+    check(`${N}x${N} puzzle is hand-solvable`, logicSolvable(N, p.givens) === true);
     const msg = 'Secret ' + N + '!';
     const id = encodeLink(N, p.givens, msg);
     const info = parseLink(id);

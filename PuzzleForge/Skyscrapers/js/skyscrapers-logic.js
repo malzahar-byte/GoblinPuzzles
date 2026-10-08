@@ -3,7 +3,7 @@
 import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.0logic';
 import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.0logic';
 
-export const ACTION_TYPE = { CELL: 0 };
+export const ACTION_TYPE = { CELL: 0, LINE: 1 }; // LINE = a row/column tick (not part of the solution)
 export const MAXN = 15; // 4-bit values
 const idx = (N, r, c) => r * N + c;
 
@@ -96,6 +96,16 @@ export function generate(N, rng = Math.random, opts = {}) {
       const res = solve(N, givens, clues, 2);
       if (res.aborted || res.count !== 1) givens[i] = save;
     }
+    // A board with no numbers at all is still unique, but every line then needs a chain of
+    // reasoning before the first digit appears, which is what the owner hit on the 4x4 test
+    // board ("hard to solve for some reason", 2026-10-08). Keep a small floor of given numbers
+    // so a player always has somewhere to start.
+    const floor = opts.minGivens ?? Math.max(2, Math.round(N * N * 0.12));
+    for (const i of shuffleArr([...Array(N * N).keys()], rng)) {
+        if (givens.filter(Boolean).length >= floor) break;
+        if (!givens[i]) givens[i] = sol[i];
+    }
+
     const res = solve(N, givens, clues, 2);
     if (!res.aborted && res.count === 1) return { N, givens, clues, solution: res.grid, attempts: t + 1 };
   }

@@ -51,9 +51,9 @@ const TESTS = [
     ['Pictogram', '/PuzzleForge/Pictogram/index.html?id=cCM-Fl-sEWICog_V'],
     ['Hashi', '/PuzzleForge/Hashi/play.html?id=-Xrybal-KMq-okrX60hypwGl'],
     ['Akari', '/PuzzleForge/Akari/index.html?id=ooAqM4-kPW8e--eiYWs-1Iwg-_dEkY2WW--&_gdp=muu0wg83'],
-    ['Skyscrapers', '/PuzzleForge/Skyscrapers/index.html?id=r5Fgko-JgIewws-bepOhEEEEAc-kcae-QUPOa-w-Egd'],
-    ['Binairo', '/PuzzleForge/Binairo/index.html?id=EiNrgooiGgpNaziN-cgIcqEZFpQuuoh-'],
-    ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=Uid-WEoh-VRgpsES0EpUs_moagsezclad--ugiF-'],
+    ['Skyscrapers', '/PuzzleForge/Skyscrapers/index.html?id=_GkduhIEGcUqE-d-sFF-j-Ehwh--aeaUka-fyxo'],
+    ['Binairo', '/PuzzleForge/Binairo/index.html?id=IeqUb-UsJEgNoQQGcb_XI-Eskk-c'],
+    ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=--d_-O_ig-Vco-qoo-o-M-i-gggdk-F-dE-ci_-sa-_gaa_'],
     ['Nonogram', '/PuzzleForge/Nonogram/index.html?id=EkjCQkVo_E1zztIsWQNdH2j2pF'],
 ];
 

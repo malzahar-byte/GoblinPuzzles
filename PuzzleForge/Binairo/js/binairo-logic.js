@@ -132,7 +132,59 @@ function buildRandomGrid(N, rng) {
     return rec(0) ? rows.map(r => r.slice()) : null;
 }
 
-// Random puzzle with exactly one solution, or null.
+// The deductions a player actually makes, applied to a fixpoint:
+//   1. in a line that already holds N/2 of one symbol, every empty cell is the other symbol;
+//   2. two equal neighbours force the third cell of the run to be the opposite (XX_ / X_X / _XX);
+//   3. no line may repeat another line once complete (only worth applying at the end).
+// Returns true when the clues alone are enough to finish the grid this way. A puzzle can be
+// unique and still need a guess; that is exactly what made our 6x6 boards feel impossible
+// (owner report 2026-10-08), so the generator only ships clues this solver can complete.
+export function logicSolvable(N, givens) {
+    const half = N / 2;
+    const g = givens.map(v => (v === -1 ? -1 : v));
+    const at = (r, c) => g[r * N + c];
+    const set = (i, v) => { if (g[i] === -1) { g[i] = v; return true; } return g[i] === v; };
+    let progress = true;
+    while (progress) {
+        progress = false;
+        for (let r = 0; r < N; r++) {
+            let ones = 0, zeros = 0, empties = 0;
+            for (let c = 0; c < N; c++) { const v = at(r, c); if (v === -1) empties++; else if (v === 1) ones++; else zeros++; }
+            if (empties === 0) continue;
+            const want = ones === half ? 0 : zeros === half ? 1 : -1;
+            if (want === -1) continue;
+            for (let c = 0; c < N; c++) if (at(r, c) === -1) { if (!set(r * N + c, want)) return false; progress = true; }
+        }
+        for (let c = 0; c < N; c++) {
+            let ones = 0, zeros = 0, empties = 0;
+            for (let r = 0; r < N; r++) { const v = at(r, c); if (v === -1) empties++; else if (v === 1) ones++; else zeros++; }
+            if (empties === 0) continue;
+            const want = ones === half ? 0 : zeros === half ? 1 : -1;
+            if (want === -1) continue;
+            for (let r = 0; r < N; r++) if (at(r, c) === -1) { if (!set(r * N + c, want)) return false; progress = true; }
+        }
+        // rule 2: two equal neighbours (either side of the empty cell) force the opposite value.
+        // -2 is "off the board" and equals no value, so these comparisons are safe at the edges.
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+            if (at(r, c) !== -1) continue;
+            const l = c > 0 ? at(r, c - 1) : -2, ll = c > 1 ? at(r, c - 2) : -2;
+            const rr = c < N - 1 ? at(r, c + 1) : -2, rrr = c < N - 2 ? at(r, c + 2) : -2;
+            const u = r > 0 ? at(r - 1, c) : -2, uu = r > 1 ? at(r - 2, c) : -2;
+            const d = r < N - 1 ? at(r + 1, c) : -2, dd = r < N - 2 ? at(r + 2, c) : -2;
+            let want = -1;
+            if ((l === 0 && ll === 0) || (rr === 0 && rrr === 0) || (l === 0 && rr === 0)) want = 1;
+            else if ((l === 1 && ll === 1) || (rr === 1 && rrr === 1) || (l === 1 && rr === 1)) want = 0;
+            else if ((u === 0 && uu === 0) || (d === 0 && dd === 0) || (u === 0 && d === 0)) want = 1;
+            else if ((u === 1 && uu === 1) || (d === 1 && dd === 1) || (u === 1 && d === 1)) want = 0;
+            if (want === -1) continue;
+            if (!set(r * N + c, want)) return false;
+            progress = true;
+        }
+    }
+    return g.every(v => v !== -1);
+}
+
+// Random puzzle with exactly one solution AND completable with the rules above, or null.
 export function generate(N, rng = Math.random, opts = {}) {
     const attempts = opts.attempts ?? 3;
     for (let a = 0; a < attempts; a++) {
@@ -145,10 +197,11 @@ export function generate(N, rng = Math.random, opts = {}) {
             const saved = givens[i];
             givens[i] = -1;
             const res = solve(N, givens, 2);
-            if (res.aborted || res.count !== 1) givens[i] = saved; // unknown or non-unique: keep it
+            // unknown, non-unique, or no longer hand-solvable: keep the clue
+            if (res.aborted || res.count !== 1 || !logicSolvable(N, givens)) givens[i] = saved;
         }
         const check = solve(N, givens, 1);
-        if (!check.aborted && check.count === 1) return { N, givens, solution: check.rows.flat() };
+        if (!check.aborted && check.count === 1 && logicSolvable(N, givens)) return { N, givens, solution: check.rows.flat() };
     }
     return null;
 }
