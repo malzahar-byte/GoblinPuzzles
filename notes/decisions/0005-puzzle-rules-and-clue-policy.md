@@ -35,12 +35,15 @@ optionally a few given digits; unique solution. Clue policy is **a density/balan
 set**: the owner's reference is `futoshiki.com`, which ships **difficulty tiers (Trivial, Easy,
 Tricky, Extreme)** that change how much is given. Generator must target a tier, and delete-to-minimal
 (every sign that uniqueness does not need — today's behaviour) is wrong.
-- **Nurikabe** — every numbered cell is an island of exactly that size, one clue per island, islands
-never touch orthogonally, all other cells are sea, the sea is one connected region and contains no
-2×2 block. A unique solution is expected (matches the standard puzzle). Two requirements recorded
-2026-10-09 after the owner's 5×5 report: **an unset cell must look different from an island** (today
-both are "no fill", so a player cannot see a cell they have not clicked), and **a board that breaks a
-rule must say which rule it breaks**.
+- **Nurikabe — TWO states, not three.** A cell is white (island) or black (sea); **white is the
+default**, so the player only ever marks black. Reference the owner gave: `puzzle-nurikabe.com` —
+"Left click on a square to make it black. Right click to mark with dot." Our board cycles
+unknown → island → sea, which is wrong twice over: it invents a third state, and an unset cell is
+drawn identically to an island, so a player cannot see a cell they have not clicked — that is the
+owner's 5×5 report (his board *is* the unique solution once every cell is set). Rules: each numbered
+cell is an island of exactly that size, one clue per island, islands never touch orthogonally, all
+other cells are sea, the sea is one connected region with no 2×2 block; a unique solution is
+expected. A board that breaks a rule must also **say which rule it breaks**.
 - **Akari / Skyscrapers / Binairo** — rules as printed on their pages (they are the standard
 puzzles). Binairo already rejects boards a human cannot start, which is the pattern the others
 should follow for human-solvability.

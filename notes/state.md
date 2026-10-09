@@ -234,11 +234,15 @@ from `…/GoblinPuzzles/PuzzleForge/`.
   `smoke-player.mjs` is still **stale** — it opens the old `/Pictogram/` path, which 404s.
 - **Owner's local runner (not part of a version):** `Run-Local.cmd` + `dev-tools/local-runner.mjs`
   + `package.json` + `.gitignore`. Double-clicking it serves the folder on `127.0.0.1`, opens the
-  Forge in the owner's Chrome, adds a "Local tests" section with **Quick** (the gate), **Full** (the
-  gate, then the two slow Pictogram sweeps with no timeout) and **Browser** (all 9 playable puzzles
-  solved by real clicks) buttons, and writes `TEST-RESULTS.md` at the folder root. Its only
-  dependency is `playwright-core` (no browser download) and it drives the installed Chrome/Edge; the
-  window closes when the browser does. In-flight jobs are never interrupted. See `testing.md`.
+  Forge in the owner's **Edge** (Chrome only as a fallback; `CHROMIUM_PATH` overrides), adds a
+  "Local tests" section with **Quick** (the gate), **Full** (the gate, then the two slow Pictogram
+  sweeps with no timeout) and **Browser** (all 9 playable puzzles solved by real clicks) buttons, and
+  writes `TEST-RESULTS.md` at the folder root. Its only dependency is `playwright-core` (no browser
+  download). The window closes when the browser window does — **alt-tabbing away is not a close**:
+  the page reports its own visibility and a hidden page gets a 15-minute backstop instead of the
+  45-second one a visible page gets (fixed 2026-10-09; before that a long tab-away killed the
+  server, verified by running one visible and one hidden instance side by side). In-flight jobs are
+  never interrupted. See `testing.md`.
 
 ## Site-wide known limits
 

@@ -3,9 +3,10 @@
 // Local-only tooling: it never rewrites files and is not part of the published site.
 //
 // What it does:
-//   - serves this folder on 127.0.0.1 and opens Chrome at the Forge,
+//   - serves this folder on 127.0.0.1 and opens Edge (Chrome as a fallback) at the Forge,
 //   - injects a small heartbeat into every page it serves, so it can tell when the browser is
-//     closed and stop itself (the run window closes with it); it never stops mid-job,
+//     closed and stop itself (the run window closes with it); it never stops mid-job, and it does
+//     NOT treat a backgrounded tab as closed (a hidden tab is throttled by the browser),
 //   - runs the jobs behind the "Local tests" buttons on the Forge page:
 //       quick   -> node dev-tools/check-all.mjs                                    (the fast gate)
 //       full    -> the gate, then the two slow Pictogram sweeps run directly with no time limit
@@ -15,7 +16,7 @@
 //     file can be copied back to the agents as the result.
 //
 // The browser job needs two things once: `npm install` for playwright-core (done by Run-Local.cmd)
-// and a Chrome to drive (auto-detected, or point CHROMIUM_PATH at chrome.exe). The other jobs need
+// and Edge to drive (auto-detected, or point CHROMIUM_PATH at msedge.exe/chrome.exe). The other jobs need
 // nothing at all.
 //
 // Usage: node dev-tools/local-runner.mjs [--port N] [--no-open]
@@ -35,7 +36,8 @@ const START_PORT = portIdx >= 0 && Number(ARGV[portIdx + 1]) ? Number(ARGV[portI
 
 const PING_INTERVAL_MS = 5000;   // how often a served page says "still here"
 const BYE_GRACE_MS = 8000;       // after the page says "closed", wait this long for another page
-const IDLE_GRACE_MS = 20000;     // no ping at all, after at least one was seen
+const IDLE_GRACE_MS = 45000;     // no ping at all, while the page says it is VISIBLE
+const HIDDEN_GRACE_MS = 900000;  // backstop for a page that reported itself hidden (15 min)
 const MAX_OUTPUT = 200 * 1024;   // per-job captured output kept (tail)
 const KEEP_RUNS = 4;             // run sections kept in TEST-RESULTS.md
 const RESULTS_FILE = path.join(ROOT, 'TEST-RESULTS.md');
@@ -50,32 +52,42 @@ const TYPES = {
     '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.map': 'application/json'
 };
 
-// Injected into every served page: pings while the page is open, says "bye" when it closes or
-// navigates away. That is how the runner knows the browser is gone.
+// Injected into every served page: pings while the page is open, reports whether the tab is
+// visible, and says "bye" when it closes or navigates away. The visibility report is what keeps the
+// runner alive while the owner is in another window: a hidden tab is throttled by the browser to
+// about one ping a minute, which used to look exactly like "the browser is gone".
 const HEARTBEAT = '<script>/* GoblinPuzzles local runner */\n'
     + '(function(){if(window.__gdpLocalPing)return;window.__gdpLocalPing=1;'
-    + 'setInterval(function(){fetch(\'/__ping\',{cache:\'no-store\'}).catch(function(){})},' + PING_INTERVAL_MS + ');'
+    + 'function ping(){fetch(\'/__ping?hidden=\'+(document.hidden?1:0),{cache:\'no-store\'}).catch(function(){})}'
+    + 'setInterval(ping,' + PING_INTERVAL_MS + ');'
+    + 'addEventListener(\'visibilitychange\',ping);'
+    + 'addEventListener(\'focus\',ping);'
     + 'addEventListener(\'pagehide\',function(){try{navigator.sendBeacon(\'/__bye\',\'1\')}catch(e){}})})();'
     + '</script>';
 
-// Find a browser to drive. Windows first: Chrome in the usual places (using the environment's
-// program dirs, so a user- or drive-relocated install is still found), then Edge, which every
-// Windows 10/11 machine has and which speaks the same protocol. The runner only needs one. 
+// Find a browser to drive. **Edge first** — it ships with every Windows 10/11 machine and it is what
+// the owner plays in; Chrome is only a fallback. (The owner's earlier report was that the runner
+// opened the default browser instead of the one it meant to use.) The runner only needs one. 
 // CHROMIUM_PATH always wins, and the last entries cover the agents' Linux sandbox.
-function findChrome() {
+function findBrowser() {
     const env = process.env;
     const candidates = [env.CHROMIUM_PATH || ''];
     const programDirs = [env.ProgramFiles, env['ProgramFiles(x86)'], env.ProgramW6432, env.LOCALAPPDATA].filter(Boolean);
+    // Edge first, in the usual places and on every other drive letter.
+    for (const dir of programDirs) candidates.push(path.join(dir, 'Microsoft', 'Edge', 'Application', 'msedge.exe'));
+    for (const d of 'CDEFGHIJKLMNOPQRSTUVWXYZ') {
+        candidates.push(d + ':\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe');
+        candidates.push(d + ':\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe');
+    }
+    candidates.push('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe');
+    candidates.push('C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe');
+    // Chrome only as a fallback, in case Edge is missing.
     for (const dir of programDirs) candidates.push(path.join(dir, 'Google', 'Chrome', 'Application', 'chrome.exe'));
-    // The same spots on every other drive letter, in case the install is not on C:.
     for (const d of 'CDEFGHIJKLMNOPQRSTUVWXYZ') {
         candidates.push(d + ':\\Program Files\\Google\\Chrome\\Application\\chrome.exe');
         candidates.push(d + ':\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe');
     }
-    for (const dir of programDirs) candidates.push(path.join(dir, 'Microsoft', 'Edge', 'Application', 'msedge.exe'));
-    candidates.push('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe');
-    candidates.push('C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe');
-    candidates.push('/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser');
+    candidates.push('/usr/bin/microsoft-edge', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser');
     for (const c of candidates) {
         try { if (c && fs.existsSync(c)) return c; } catch (e) { /* unreadable path: try the next */ }
     }
@@ -147,7 +159,7 @@ const JOBS = {
         ]
     },
     browser: {
-        label: 'Browser tests - all 8 puzzles, solved by real clicks in Chrome',
+        label: 'Browser tests - all 9 puzzles, solved by real clicks in Edge',
         steps: [
             { file: 'dev-tools/browser-checks/click-solve.mjs', args: [], cmdline: 'node dev-tools/browser-checks/click-solve.mjs' }
         ]
@@ -224,12 +236,12 @@ function runJob(name) {
         const env = { ...process.env };
         let steps = spec.steps;
         if (name === 'browser') {
-            const chrome = findChrome();
-            if (!chrome) return finishJob(name, entry, 2, 'No Chrome or Edge found. Install Google Chrome (Edge already comes with Windows), then run again.');
+            const chrome = findBrowser();
+            if (!chrome) return finishJob(name, entry, 2, 'No Edge or Chrome found. Edge comes with Windows 10/11; if it is missing, install Edge, or point CHROMIUM_PATH at a chromium build, then run again.');
             env.CHROMIUM_PATH = chrome;
             const p = await probeFreePort(JOB_PORT_START);
             if (!p) return finishJob(name, entry, 2, 'No free port found near ' + JOB_PORT_START + '.');
-            entry.output = 'Chrome: ' + chrome + '\n';
+            entry.output = 'Browser: ' + chrome + '\n';
             steps = [{ file: spec.steps[0].file, args: [ROOT, String(p)], cmdline: 'node dev-tools/browser-checks/click-solve.mjs <folder> ' + p }];
         }
         console.log('[job ' + name + '] started');
@@ -276,6 +288,7 @@ function serveFile(req, res) {
 let sawPing = false;
 let lastSeen = 0;
 let byeAt = 0;
+let pageHidden = false;   // last thing the page told us about its own visibility
 let shuttingDown = false;
 
 function shutdown(reason) {
@@ -288,7 +301,13 @@ function shutdown(reason) {
 
 const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, 'http://127.0.0.1');
-    if (u.pathname === '/__ping') { sawPing = true; lastSeen = Date.now(); byeAt = 0; res.writeHead(204); res.end(); return; }
+    if (u.pathname === '/__ping') {
+        sawPing = true; lastSeen = Date.now(); byeAt = 0;
+        // The page tells us whether it is visible. A hidden tab is throttled by the browser to
+        // about one ping a minute, so a hidden page must never look like a closed browser.
+        pageHidden = u.searchParams.get('hidden') === '1';
+        res.writeHead(204); res.end(); return;
+    }
     if (u.pathname === '/__bye') { sawPing = true; lastSeen = Date.now(); byeAt = Date.now(); res.writeHead(204); res.end(); return; }
     if (u.pathname === '/__status') {
         const addr = server.address();
@@ -304,17 +323,9 @@ const server = http.createServer(async (req, res) => {
     serveFile(req, res);
 });
 
-setInterval(() => {
-    if (shuttingDown) return;
-    if (current && current.state === 'running') return;   // never stop in the middle of a job
-    const now = Date.now();
-    if (byeAt && now - byeAt > BYE_GRACE_MS) shutdown('Browser closed');
-    else if (sawPing && now - lastSeen > IDLE_GRACE_MS) shutdown('Browser stopped responding');
-}, 2000);
-
 function openBrowser(url) {
     try {
-        const chrome = findChrome();
+        const chrome = findBrowser();
         if (chrome) { spawn(chrome, [url], { detached: true, stdio: 'ignore' }).unref(); return; }
         if (process.platform === 'win32') { spawn('cmd', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' }).unref(); return; }
         if (process.platform === 'darwin') { spawn('open', [url], { detached: true, stdio: 'ignore' }).unref(); return; }
@@ -324,15 +335,27 @@ function openBrowser(url) {
     }
 }
 
+setInterval(() => {
+    if (shuttingDown) return;
+    if (current && current.state === 'running') return;   // never stop in the middle of a job
+    const now = Date.now();
+    const idle = now - lastSeen;
+    // While the page says it is hidden the browser is throttling its timers, so a long gap means
+    // nothing. Only a visible page that goes quiet (or a hidden one gone for the backstop) is gone.
+    const grace = pageHidden ? HIDDEN_GRACE_MS : IDLE_GRACE_MS;
+    if (byeAt && now - byeAt > BYE_GRACE_MS) shutdown('Browser closed');
+    else if (sawPing && idle > grace) shutdown('Browser stopped responding');
+}, 2000);
+
 const port = await listenFree(server, START_PORT);
 const url = 'http://127.0.0.1:' + port + '/PuzzleForge/';
-const chrome = findChrome();
+const chrome = findBrowser();
 
 console.log('GoblinPuzzles - local runner');
 console.log('Serving:  ' + url);
 console.log('Tests:    use the buttons in the "Local tests" section of the page.');
 console.log('Results:  TEST-RESULTS.md, in this folder (linked on the page too).');
-console.log('Browser:  ' + (chrome || 'no Chrome or Edge found - the Browser tests button will not work until one is installed'));
-console.log('This window closes by itself when you close the browser.\n');
+console.log('Browser:  ' + (chrome || 'no Edge or Chrome found - the Browser tests button will not work until one is installed'));
+console.log('This window closes by itself when you close the browser window - alt-tabbing away is fine.\n');
 
 if (!NO_OPEN) openBrowser(url);

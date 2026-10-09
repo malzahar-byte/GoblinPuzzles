@@ -305,3 +305,23 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
   `PuzzleForge/*/js/*-board.js`.
 - `withdrawn` — the earlier claim that the owner's 5×5 Nurikabe board broke two rules; withdrawn and
   corrected in `history.md` (2026-10-09, third entry) and `state.md`.
+
+## Phase 0 — landed (2026-10-09, Cloud_Cline_1)
+
+- `done` — **Runner: Edge, and it survives a backgrounded tab.** `findBrowser()` now prefers Edge
+  (Chrome only as a fallback, `CHROMIUM_PATH` still wins); the injected heartbeat reports
+  `document.hidden`, and a hidden page gets a 15-minute backstop instead of the 45-second one a
+  visible page gets, so alt-tabbing no longer looks like a closed browser. Verified by running two
+  instances side by side (one reporting visible, one hidden, both then silent for 57 s): the visible
+  one exited, the hidden one stayed alive. → `dev-tools/local-runner.mjs`.
+- `done` — **Gate progress:** `check-all.mjs` prints `[k/n] <test> ...` as each job starts, so the
+  runner's log pane shows movement; run on this baseline → 13 pass, 0 fail, 0 unrun. →
+  `dev-tools/check-all.mjs`.
+- `approved` — **Nurikabe is TWO states (white default, black = sea), not three.** The owner:
+  "It is only 2 states, black or white"; reference `puzzle-nurikabe.com` — "Left click on a square to
+  make it black. Right click to mark with dot." Our cycle unknown → island → sea invents a third
+  state, and an unset cell looks exactly like an island, which is why a correct board never
+  registered as solved. Left click = black, right click = dot mark, solved check runs on the binary
+  colouring. → `PuzzleForge/Nurikabe/js/nurikabe-board.js`, `decisions/0005`.
+- `done` — the earlier "an unset cell must not look like an island" item is superseded by the
+  two-state item above (with two states there is no unset state to show).

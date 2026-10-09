@@ -290,3 +290,24 @@ Append only; a correction is a new entry, never an edit.
   in every puzzle, with a settings toggle** — recorded with its design in `decisions/0005`; (2)
   "the game detects a correct solution" is not a new feature, it is the existing solved state plus the
   secret message.
+
+## 2026-10-09 — Cloud_Cline_1 — Phase 0: runner fixed (Edge + backgrounded tabs), gate progress
+
+- **Nurikabe correction #2 (owner):** it is a **two-state** puzzle — white (island) or black (sea),
+  with white as the default — so the player only ever marks black. Reference: `puzzle-nurikabe.com`,
+  "Left click on a square to make it black. Right click to mark with dot." Our board cycles
+  unknown → island → sea, which invents a third state and draws an unset cell exactly like an island
+  — that is why the owner's correct 5×5 board never registered as solved, and it is the same cause as
+  his old "first click does nothing". Recorded in `decisions/0005` and queued as a `proposed` fix.
+- **Runner reworked (`dev-tools/local-runner.mjs`).** `findBrowser()` prefers **Edge** (Chrome only as
+  a fallback; `CHROMIUM_PATH` still wins) and the injected heartbeat now reports
+  `document.hidden`, so the server can tell "backgrounded" from "closed": a hidden page gets a
+  15-minute backstop, a visible one 45 seconds. Verified by running two instances side by side, one
+  reporting visible and one hidden, both then silent for 57 s — the visible one exited with
+  "Browser stopped responding", the hidden one kept serving. This is the owner's report ("if I tab
+  away for a long time it stops") closed with evidence rather than a guess.
+- **Gate progress (`dev-tools/check-all.mjs`):** it now prints `[k/n] <test> ...` as each job starts,
+  so the owner's log pane shows movement instead of one silent minute. RAN: `node dev-tools/check-all.mjs`
+  on this tree → **13 pass, 0 fail, 0 unrun** (2 slow Pictogram sweeps not run), progress lines shown.
+  The runner itself was smoke-tested (`--no-open`, `/__status`, heartbeat injection, both
+  `/__ping` states).

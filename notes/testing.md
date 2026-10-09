@@ -5,7 +5,8 @@ gate command).
 
 ## The gate
 
-`node dev-tools/check-all.mjs` runs the fast checks below and prints a pass / fail / unrun table. Run
+`node dev-tools/check-all.mjs` runs the fast checks below and prints a pass / fail / unrun table. It
+prints a `[k/n] <test>` line as each job starts, so the runner's log pane shows it moving. Run
 it when you finish, and report its result. A job that hits the per-job timeout is reported as
 **unrun**, not failed — so state plainly which rows were unrun.
 
@@ -33,7 +34,9 @@ Two people run checks: the agent, and the owner through the local runner. Keep t
   logic file. Nothing else by default — answering a question or a docs-only edit runs nothing.
 - **Owner, at the pc:** `Run-Local.cmd` (folder root) opens the Forge with a "Local tests" section:
   **Quick** = the gate, **Full** = the gate plus the two slow Pictogram sweeps with no time limit,
-  **Browser** = all playable puzzles solved by real clicks in the installed Chrome/Edge. Results are
+  **Browser** = all playable puzzles solved by real clicks in the installed **Edge** (Chrome is only a
+fallback). It keeps serving while a tab is merely backgrounded and stops when the browser window is
+closed. Results are
   written to `TEST-RESULTS.md` at the folder root and copied back to the agent.
 - **The agent never installs a browser** (or Chromium libraries, fonts, `.deb` sets) to run a check,
   never runs a browser pass twice for one change, and never re-runs a recorded result (R4/R17).

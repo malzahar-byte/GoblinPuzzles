@@ -39,8 +39,14 @@ for (const name of fs.readdirSync(puzzleDir)) {
 
 const skipped = SLOW ? [] : jobs.map(([name]) => name).filter(name => SLOW_JOBS.includes(name));
 const rows = [];
+let step = 0;
+const total = jobs.length - skipped.length;
 for (const [name, file] of jobs) {
     if (skipped.includes(name)) continue;
+    step++;
+    // Progress line: the gate is silent for a minute otherwise, and the owner watches this
+    // stream live in the "Local tests" log pane (dev-tools/local-runner.mjs pipes it through).
+    console.log(`  [${step}/${total}] ${name} ...`);
     const r = spawnSync(process.execPath, [file], { cwd: ROOT, encoding: 'utf8', timeout: TIMEOUT_MS });
     let status;
     if (r.error && (r.error.code === 'ETIMEDOUT' || r.error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER')) status = 'unrun';
