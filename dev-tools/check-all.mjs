@@ -27,6 +27,7 @@ const SLOW_JOBS = ['Pictogram/test-image.mjs', 'Pictogram/test-roundtrip.mjs'];
 const jobs = [
     ['docs', 'dev-tools/check-docs.mjs'],
     ['integration', 'dev-tools/check-integration.mjs'],
+    ['palettes', 'dev-tools/check-palettes.mjs'],
 ];
 const puzzleDir = path.join(ROOT, 'PuzzleForge');
 for (const name of fs.readdirSync(puzzleDir)) {

@@ -333,3 +333,20 @@ Append only; a correction is a new entry, never an edit.
   the rules. Two rounds went into re-deriving Nurikabe until `puzzle-nurikabe.com` settled it (two
   states, not three), and Train Tracks' expected look came from his link. A rules text does not carry
   the interaction model or the expected look.
+
+## 2026-10-09 — Cloud_Cline_1 — Phase 1 item 4: one board background, and it is visible
+
+- **The fix the owner asked for, with numbers.** `chromeFrom()` in `shared/gdp-palettes.js` built the
+  board surface from `p.cells[0]` — a *cell* colour — so in several styles the board was drawn in a
+  colour within a few RGB steps of the page background. Measured before: **6 of 20 palette/theme
+  pairs too close** (paper 8, ocean 6, contrast 11, candy 5, mono 4 in light; neon 3, classic 8,
+  forest 5 in dark). `surface` now comes from the palette's `bg`, and seven `bg` values were tuned:
+  after, **all 20 pairs are visibly distinct**.
+- **`dev-tools/check-palettes.mjs` is a gate row.** It reads `--gdp-bg` out of `shared/gdp-theme.css`
+  and fails if any palette/theme surface comes within 12 steps (average per-channel distance) of it,
+  so "a board you cannot see" is now a build failure rather than an opinion. `check-all.mjs` runs it
+  (14 jobs). RAN: `node dev-tools/check-all.mjs` → **14 pass, 0 fail, 0 unrun** (2 slow not run).
+- Pictogram/Nonogram already drew `palette.bg`, so they inherit the tuned colours — their board
+  background becomes visible in the light styles too.
+- Not verified by eye: this is a colour change on every player page, and the browser look belongs to
+  the owner's run (R17). The tuned values are listed in the QA output and are easy to veto.

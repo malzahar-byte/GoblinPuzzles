@@ -343,3 +343,20 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
   gives 7 clue cells (19%) at 6×6, Akari 10×10 takes 2.2 s, Skyscrapers 8×8 3.5 s.
 - `approved` — **Fill in the `human` column for the other puzzles** (Akari, Hashi, Skyscrapers,
   Nurikabe, Train Tracks have no deduction-only check). Binairo's `logicSolvable` is the pattern.
+
+## Phase 1 item 4 — landed: the board is visible in every style (2026-10-09)
+
+- `done` — **Board surface comes from the palette's `bg`, and a check keeps it visible.**
+  `chromeFrom()` used `p.cells[0]` (a *cell* colour) as the board surface, so the board was drawn in
+  something indistinguishable from the page in several styles. Measured before the fix: **6 of 20
+  palette/theme pairs within 12 RGB steps of `--gdp-bg`** — paper (8), ocean (6), contrast (11),
+  candy (5), mono (4) in light; neon (3), classic (8) and forest (5) in dark. `surface` now comes from
+  the palette's `bg`, and seven `bg` values were tuned so **all 20 pairs pass**.
+  `dev-tools/check-palettes.mjs` is in the gate, so a new palette that draws no board fails the build.
+  → `shared/gdp-palettes.js`, `dev-tools/check-palettes.mjs`, `dev-tools/check-all.mjs`,
+  `interfaces/palette-chrome.md`.
+- `proposed` — the tuned `bg` colours are a look choice the owner may want to adjust (high contrast is
+  now a very light blue-grey rather than pure white, candy/mono/paper slightly deeper). The numbers
+  are in `check-palettes.mjs` output.
+- `done` — Pictogram/Nonogram already drew `palette.bg`, so they inherit the same tuned colours and
+  their board background becomes visible in light styles too.

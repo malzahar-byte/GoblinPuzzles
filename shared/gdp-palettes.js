@@ -25,7 +25,7 @@ export const PALETTES = {
             hover: [0, 0, 0, 70]
         },
         dark: {
-            bg: [30, 32, 38], solvedBg: [40, 110, 60],
+            bg: [44, 47, 56], solvedBg: [40, 110, 60],
             text: [235, 235, 235], textMuted: [110, 110, 118],
             cells: [[58, 64, 72], [52, 58, 66], [50, 68, 62], [44, 62, 56]],
             confirmedMix: [120, 180, 255], confirmedT: 0.92,
@@ -35,7 +35,7 @@ export const PALETTES = {
         }
     },
     paper: { label: 'Paper', both: {
-        bg: [244, 236, 216], solvedBg: [190, 215, 160],
+        bg: [238, 228, 204], solvedBg: [190, 215, 160],
         text: [60, 40, 25], textMuted: [175, 160, 140],
         cells: [[250, 244, 228], [244, 236, 214], [246, 240, 222], [240, 232, 208]],
         confirmedMix: [55, 38, 28], confirmedT: 0.93,
@@ -59,7 +59,7 @@ export const PALETTES = {
         lineThin: [150, 180, 210], lineThick: [20, 60, 110],
         hover: [0, 60, 120, 45] } },
     contrast: { label: 'High contrast', both: {
-        bg: [255, 255, 255], solvedBg: [120, 220, 120],
+        bg: [222, 226, 234], solvedBg: [120, 220, 120],
         text: [0, 0, 0], textMuted: [150, 150, 150],
         cells: [[255, 255, 255], [238, 238, 238], [255, 255, 255], [238, 238, 238]],
         confirmedMix: [0, 0, 0], confirmedT: 1,
@@ -75,7 +75,7 @@ export const PALETTES = {
         lineThin: [230, 160, 120], lineThick: [160, 70, 60],
         hover: [172, 40, 70, 45] } },
     forest: { label: 'Forest', both: {
-        bg: [24, 36, 28], solvedBg: [40, 90, 55],
+        bg: [36, 50, 40], solvedBg: [40, 90, 55],
         text: [222, 232, 214], textMuted: [120, 140, 120],
         cells: [[40, 58, 44], [34, 52, 40], [38, 56, 42], [32, 50, 38]],
         confirmedMix: [196, 212, 120], confirmedT: 0.9,
@@ -83,7 +83,7 @@ export const PALETTES = {
         lineThin: [60, 86, 64], lineThick: [150, 180, 130],
         hover: [196, 212, 120, 40] } },
     candy: { label: 'Candy', both: {
-        bg: [252, 232, 245], solvedBg: [200, 235, 190],
+        bg: [244, 208, 236], solvedBg: [200, 235, 190],
         text: [90, 40, 90], textMuted: [210, 170, 205],
         cells: [[255, 244, 250], [250, 236, 246], [244, 238, 252], [238, 230, 250]],
         confirmedMix: [214, 70, 150], confirmedT: 0.85,
@@ -91,7 +91,7 @@ export const PALETTES = {
         lineThin: [236, 198, 224], lineThick: [196, 110, 170],
         hover: [214, 70, 150, 40] } },
     neon: { label: 'Neon', both: {
-        bg: [12, 12, 20], solvedBg: [20, 70, 60],
+        bg: [34, 34, 56], solvedBg: [20, 70, 60],
         text: [120, 240, 255], textMuted: [90, 100, 120],
         cells: [[24, 24, 36], [20, 20, 30], [22, 22, 34], [18, 18, 28]],
         confirmedMix: [255, 50, 200], confirmedT: 0.95,
@@ -99,7 +99,7 @@ export const PALETTES = {
         lineThin: [40, 40, 56], lineThick: [120, 240, 255],
         hover: [255, 50, 200, 50] } },
     mono: { label: 'Mono (grayscale)', both: {
-        bg: [235, 235, 235], solvedBg: [205, 205, 205],
+        bg: [224, 226, 231], solvedBg: [205, 205, 205],
         text: [0, 0, 0], textMuted: [160, 160, 160],
         cells: [[248, 248, 248], [238, 238, 238], [248, 248, 248], [238, 238, 238]],
         confirmedMix: [0, 0, 0], confirmedT: 1,
@@ -128,7 +128,11 @@ export function buildCellFill(palette, states) {
 const rgb = (c) => 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
 const luminance = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
 function chromeFrom(p) {
-    const surface = p.cells[0], ink = p.text, node = mix(surface, ink, 0.16), accent = p.confirmedMix;
+    // The board surface is the palette's own board background (`bg`), NOT a cell colour. It used to
+    // be `cells[0]`, which made the board nearly invisible in several styles — the owner's "Show
+    // board background does not work in many styles" (2026-10-09). `dev-tools/check-palettes.mjs`
+    // fails the gate if any style's surface comes within 12 steps of the page background.
+    const surface = p.bg || p.cells[0], ink = p.text, node = mix(surface, ink, 0.16), accent = p.confirmedMix;
     const accentInk = luminance(accent) > 0.6 ? [0, 0, 0] : [255, 255, 255];
     return { surface: rgb(surface), grid: rgb(p.lineThin), ink: rgb(ink), node: rgb(node), accent: rgb(accent), accentInk: rgb(accentInk), over: rgb(p.excludedColor) };
 }

@@ -78,7 +78,11 @@ settings/progress, secret lock, asset versioning.
 
 - `gdp-settings.js` — JSON-in-localStorage settings store; theme helpers; Auto → light → dark
   cycling button. Knows nothing about any puzzle.
-- `gdp-palettes.js` — 10 named themes; generic "confirmed" / "excluded" cell states;
+- `gdp-palettes.js` — 10 named themes; generic "confirmed" / "excluded" cell states; **the board
+  surface comes from the palette's own `bg`** (not a cell colour, which made boards invisible in some
+  styles; 2026-10-09). Six of the twenty palette/theme pairs sat within 12 RGB steps of the page
+  background before the fix — paper, ocean, contrast, candy, mono (light) and neon, classic, forest
+  (dark) had their `bg` tuned so all twenty pass `dev-tools/check-palettes.mjs`;
   `resolvePalette()`, `buildCellFill()`, `resolveChrome()` (board chrome; see
   `interfaces/palette-chrome.md`).
 - `gdp-theme.css` — page shell, panels, toolbar, offcanvas panel look, (i) info buttons, 2-column
@@ -224,6 +228,9 @@ from `…/GoblinPuzzles/PuzzleForge/`.
   multi-minute Pictogram sweeps, which are not run by default.
 - `check-integration.mjs` — code wiring: broken relative imports, a settings key defined twice or
   hardcoded outside its `settings.js`, pages not reaching `gdp-settings.js`/`gdp-theme.css`.
+- `check-palettes.mjs` — **board visibility**: for every palette in both themes it compares
+  `resolveChrome().surface` with `--gdp-bg` from `gdp-theme.css` and fails below 12 (average per-channel
+  distance). A style that fails is a style where the board cannot be seen. Part of the gate.
 - `generator-qa.mjs` — **Generator QA**: sweeps every seeded puzzle and size and reports clue density,
   unique solutions, the deduction-only check where the puzzle has one, and generation time. Run from
   the runner's "Generator QA" button or by hand; the table lands in `TEST-RESULTS.md`. Not a gate.
