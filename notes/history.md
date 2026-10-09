@@ -398,3 +398,19 @@ Append only; a correction is a new entry, never an edit.
   → **14 pass, 0 fail, 0 unrun**; `node dev-tools/check-palettes.mjs` → all 320 checks pass.
 - Not verified by eye: the tuned values change how every style looks (that is the point). The numbers
   are in the checker output; the owner reviews the colours, the floors are not negotiable.
+
+## 2026-10-09 — Cloud_Cline_1 — Nurikabe is two states (the owner's report, closed)
+
+- **Two states, not three.** The board starts with every cell **white (island)**; a left click
+  toggles black (sea), a right click toggles the player's own dot mark (which never enters the link or
+  the message lock — invariant 4). `CELL.UNKNOWN` is removed from the puzzle vocabulary and the rule
+  check now refuses anything that is neither black nor white. The rules text on the player page says
+  the same, matching the reference the owner gave (`puzzle-nurikabe.com`: left click = black, right
+  click = dot).
+- **Why this closes the report:** the owner's 5×5 board *was* the unique solution; the reason it never
+  registered was that the third state drew an unclicked cell identically to an island, so a board the
+  player believed finished still held "unknown" cells. `solverClicks` is now one click per sea cell
+  (the plan the browser job uses), and `hasAny`/`reset`/`encodeState` follow the two-state model.
+- RAN: `node PuzzleForge/Nurikabe/dev-tools/test-nurikabe.mjs` → all ok (8×8: 13 islands, 10×10: 23);
+  `node dev-tools/check-all.mjs` → **14 pass, 0 fail, 0 unrun**. The adapter itself is verified by the
+  owner's Browser job (an adapter cannot be imported in Node — its logic import carries the `?v=`).

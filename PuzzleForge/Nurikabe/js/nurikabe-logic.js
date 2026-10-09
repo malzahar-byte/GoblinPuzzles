@@ -11,12 +11,14 @@
 // The generator builds a solution first (random islands, then the sea), reads the clues off it,
 // and ships the board only when a limit-2 search proves the clues have exactly one solution —
 // the message lock depends on that (notes/AGENTS.md invariant 4).
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.24logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.24logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.24logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.25logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.25logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.25logic';
 
-export const CELL = { UNKNOWN: 0, ISLAND: 1, SEA: 2 };
-export const ACTION_TYPE = { CELL: 0 };
+// Two states only (decisions/0005): white (island) and black (sea). There is no "unknown" cell in
+// the player vocabulary — white is the default — so the rule check rejects anything else as malformed.
+export const CELL = { ISLAND: 1, SEA: 2 };
+export const ACTION_TYPE = { CELL: 0, MARK: 1 };
 export const MAX_SIZE = 12;   // grid sides
 export const MAX_ISLAND = 15; // 4 bits in the link
 
@@ -34,7 +36,7 @@ export function neighbors(W, H, i) {
 // ---- rule check on a finished board ----
 export function isSolved(W, H, clues, cells) {
     const N = W * H;
-    for (let i = 0; i < N; i++) if (cells[i] === CELL.UNKNOWN) return false;
+    for (let i = 0; i < N; i++) if (cells[i] !== CELL.ISLAND && cells[i] !== CELL.SEA) return false;
     // islands: size matches their clue, exactly one clue each, never touching
     const seen = new Uint8Array(N);
     for (let i = 0; i < N; i++) {

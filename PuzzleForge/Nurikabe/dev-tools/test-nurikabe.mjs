@@ -16,8 +16,8 @@ const check = (name, ok) => { if (!ok) { bad++; console.log('FAIL', name); } };
         check('a solved board passes the rule check', isSolved(W, H, clues, solution));
         const unknown = solution.slice();
         const firstIsland = unknown.indexOf(CELL.ISLAND);
-        unknown[firstIsland] = CELL.UNKNOWN;
-        check('an unknown cell fails the rule check', !isSolved(W, H, clues, unknown));
+        unknown[firstIsland] = 0;   // neither black nor white: the UI cannot make this, the check must still refuse it
+        check('a cell that is neither black nor white fails the rule check', !isSolved(W, H, clues, unknown));
         const shrunk = solution.slice();
         shrunk[firstIsland] = CELL.SEA;
         check('an island of the wrong size fails', !isSolved(W, H, clues, shrunk));

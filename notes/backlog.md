@@ -393,3 +393,18 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
   cells with `given` (Futoshiki, Binairo, Skyscrapers, Nurikabe clue numbers, Train Tracks givens),
   add the `(?)`/`x` mark cycle on right click, and render `error` / `satisfied` from a shared
   mistake-highlighting toggle that is on by default. → the nine `*-board.js` files.
+
+## Nurikabe is two states — landed (2026-10-09)
+
+- `done` — **Nurikabe has two states, not three.** `nurikabe-board.js` now starts every cell white
+  (island) and a left click toggles black (sea); right click toggles the player's own dot mark, which
+  never enters the link or the message lock (invariant 4). `CELL.UNKNOWN` is gone from the puzzle's
+  vocabulary — the rule check now rejects anything that is neither black nor white — and the player
+  page's rules text says what the reference (`puzzle-nurikabe.com`) says. This is the owner's report
+  closed: his correct 5×5 board was the solution all along, but a cell he never clicked was still
+  "unknown" and drawn identically to an island, so the board could never complete.
+  → `PuzzleForge/Nurikabe/js/nurikabe-board.js`, `js/nurikabe-logic.js`, `index.html`,
+  `dev-tools/test-nurikabe.mjs`.
+- `approved` — **Dots and shading for the other puzzles** still to come: the `(?)`/`x` mark cycle on
+  right click, the `given` wash behind pre-filled cells, and the shared mistake highlighting
+  (`error` / `satisfied`) with its on-by-default settings toggle.
