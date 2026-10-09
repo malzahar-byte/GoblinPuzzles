@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Goblin's Puzzle Forge</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="../shared/gdp-theme.css?v=13.0.9logic">
+<link rel="stylesheet" href="../shared/gdp-theme.css?v=13.0.10logic">
 <style>
 .forge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; }
 .forge-box { display: block; padding: 1rem; color: inherit; text-decoration: none; height: 100%; }
@@ -48,8 +48,8 @@ a.forge-box:hover, a.forge-box:focus-visible { border-color: var(--gdp-accent); 
     </div>
 </div>
 <script type="module">
-import { applyTheme, setupThemeButton } from './js/util/settings.js?v=13.0.9logic';
-import { setupFreshButton } from '../shared/gdp-fresh.js?v=13.0.9logic';
+import { applyTheme, setupThemeButton } from './js/util/settings.js?v=13.0.10logic';
+import { setupFreshButton } from '../shared/gdp-fresh.js?v=13.0.10logic';
 setupFreshButton(document.getElementById('freshBtn'));
 applyTheme();
 setupThemeButton(document.getElementById('themeBtn'));
@@ -66,7 +66,7 @@ const PUZZLES = [
     { name: 'Futoshiki / KenKen', status: 'wip', href: './Futoshiki/creator.html', text: 'Latin squares with inequality or arithmetic clues.' },
     { name: 'Slitherlink', status: 'off', text: 'Draw one loop that matches every number.' },
     { name: 'Crossword generator', status: 'off', text: 'Supply the words and clues; the Forge builds and locks the grid.' },
-    { name: 'Train Tracks', status: 'off', text: 'Lay track using the row and column counts.' },
+    { name: 'Train Tracks', status: 'live', href: './TrainTracks/creator.html', text: 'Lay one closed loop of track using the row and column counts.' },
     { name: 'Chained mode', status: 'off', text: 'Link several puzzles into one sequence.' }
 ];
 const LABEL = { live: 'Play', wip: 'In progress', off: 'Not active yet' };
@@ -90,7 +90,8 @@ const TEST_LINKS = [
   { name: 'Skyscrapers', href: './Skyscrapers/index.html?id=gzgFO4xGy3asIIwGwqevitb' },
   { name: 'Binairo', href: './Binairo/index.html?id=UYoVSdZVsWq2ijTjWuA2Jk' },
   { name: 'Futoshiki', href: './Futoshiki/index.html?id=Ez_F525GqUHwU-gEpo-Vgfn' },
-  { name: 'Nurikabe', href: './Nurikabe/index.html?id=glIVkgqnE0N-t8iHGo__a22c3bs' }
+  { name: 'Nurikabe', href: './Nurikabe/index.html?id=glIVkgqnE0N-t8iHGo__a22c3bs' },
+  { name: 'Train Tracks', href: './TrainTracks/index.html?id=-OMw6O3dR-SBG-ocayc20nz' }
 ];
 const testGrid = document.getElementById('testGrid');
 for (const t of TEST_LINKS) {

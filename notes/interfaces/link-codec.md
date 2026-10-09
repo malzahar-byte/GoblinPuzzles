@@ -17,8 +17,13 @@ has to work (invariant 2): when the format changes, older links are retired, not
 
 ## Known state
 
-- Pictogram has three versions (v1 legacy random, v2/v3 picture-based) and keeps its own codec.
-- Hashi keeps its own codec (its published links are unaffected by the shared helper).
-- Akari, Skyscrapers, Binairo and Futoshiki use the shared secret lock (`secret-lock.md`).
-- The five codecs currently repeat the same framing. Extracting one shared link-header helper is a
-  `proposed` backlog item — a `shared/` change, so it needs the owner (R6).
+- Pictogram keeps its own codec (v1 random mode, v2/v3 picture-based); Nonogram uses Pictogram's
+  seed-based v1 link.
+- Akari, Hashi, Skyscrapers, Binairo, Futoshiki, Nurikabe and Train Tracks are **message-seeded
+  v2**: the link stores the seed only (`encodeFromMessage`), `parseLink` rebuilds the board from
+  it, and v1 ids are retired — there are no legacy decoders (2026-10-09). The same message + size
+  gives the same puzzle and the same link (invariant 1).
+- Akari, Skyscrapers, Binairo, Futoshiki, Nurikabe and Train Tracks use the shared secret lock
+  (`secret-lock.md`); Hashi keeps its hand-rolled plain-text XOR.
+- The codecs repeat the same framing. Extracting one shared link-header helper is a `proposed`
+  backlog item — a `shared/` change, so it needs the owner (R6).

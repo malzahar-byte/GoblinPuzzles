@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark"><head>
-<script>try{var s=JSON.parse(localStorage.getItem('gdp-nurikabe-settings')||'{}');document.documentElement.setAttribute('data-bs-theme',s.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'))}catch(e){}</script>
-<title>Nurikabe</title>
+<script>try{var s=JSON.parse(localStorage.getItem('gdp-traintracks-settings')||'{}');document.documentElement.setAttribute('data-bs-theme',s.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'))}catch(e){}</script>
+<title>Train Tracks</title>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="../../shared/gdp-theme.css?v=13.0.10logic">
@@ -28,13 +28,13 @@
       <div>
         <div class="gdp-section-title">Saved data</div>
         <button type="button" id="clearProgressBtn" class="btn btn-outline-danger btn-sm w-100">Clear saved progress…</button>
-        <div class="form-text">Deletes progress, timers and save points for all Nurikabe puzzles on this device. Settings are kept.</div>
+        <div class="form-text">Deletes progress, timers and save points for all Train Tracks puzzles on this device. Settings are kept.</div>
       </div>
     </div>
   </div>
 </div>
 <div class="gdp-page">
-  <div class="gdp-header"><h1>Nurikabe</h1><div class="gdp-subtitle" id="size"></div><div class="gdp-subtitle" id="timerDiv"></div></div>
+  <div class="gdp-header"><h1>Train Tracks</h1><div class="gdp-subtitle" id="size"></div><div class="gdp-subtitle" id="timerDiv"></div></div>
   <div class="gdp-toolbar">
     <div class="btn-group" role="group" aria-label="Undo and redo"><button id="undoBtn" class="btn btn-primary" type="button">Undo</button><button id="redoBtn" class="btn btn-primary" type="button">Redo</button></div>
     <div class="btn-group" role="group" aria-label="Zoom"><button id="zoomOutBtn" class="btn btn-primary" type="button">Zoom Out</button><button id="zoomInBtn" class="btn btn-primary" type="button">Zoom In</button></div>
@@ -45,10 +45,10 @@
   <div id="boardWrap" class="gdp-board-wrap mb-3"></div>
   <div id="msg" class="my-2 p-2 bg-success bg-opacity-10 border border-success rounded fw-bold text-center" style="display:none"></div>
   <div class="gdp-panel p-3"><div class="gdp-section-title">How to play</div>
-  <ul class="mb-0"><li>Every numbered cell starts an island; an island has exactly that many cells (its number plus the ones you add).</li>
-  <li>Islands may not touch each other, not even at an edge — only diagonally.</li>
-  <li>Every cell not on an island is <b>sea</b>. The sea is one connected region and never contains a 2×2 block of sea cells.</li>
-  <li>Click cycles unknown → island → sea → unknown; right-click clears a cell.</li>
+  <ul class="mb-0"><li>Lay <b>one closed loop</b> of track through some cells of the grid. Every piece joins exactly two sides of its cell, and joined sides must match their neighbours — a line never runs into a wall.</li>
+  <li>The numbers outside the grid count the track cells in that row or column. A count that is not shown is a count you get for free.</li>
+  <li>Cells that are pre-filled are fixed; the rest are yours.</li>
+  <li>Click a cell to cycle: empty → ─ → │ → ┌ → ┐ → ┘ → └ → empty. Right-click clears a cell.</li>
   <li>Zoom with the wheel or +/−; undo/redo with Ctrl+Z / Ctrl+Y.</li></ul></div>
   <div class="text-center mt-3"><a class="btn btn-outline-primary" href="creator.html" target="_blank">Create your own puzzle</a></div>
 </div>
@@ -58,18 +58,18 @@ import { setupSettingsDock } from '../../shared/gdp-ui.js?v=13.0.10logic';
 import { setupBoardSettingsPanel } from '../../shared/gdp-settings-panel.js?v=13.0.10logic';
 import { setupFreshButton } from '../../shared/gdp-fresh.js?v=13.0.10logic';
 import { mountBoard } from '../../shared/gdp-board.js?v=13.0.10logic';
-import { parseLink, decryptMessage, solve } from './js/nurikabe-logic.js?v=13.0.10logic';
-import { createNurikabeAdapter } from './js/nurikabe-board.js?v=13.0.10logic';
+import { parseLink, decryptMessage, solve } from './js/traintracks-logic.js?v=13.0.10logic';
+import { createTrainTracksAdapter } from './js/traintracks-board.js?v=13.0.10logic';
 import { resolveChrome } from '../../shared/gdp-palettes.js?v=13.0.10logic';
 const $ = id => document.getElementById(id);
 let info;
 try { info = parseLink(new URLSearchParams(location.search).get('id') || ''); }
-catch (e) { $('boardWrap').textContent = "This link isn't a valid Nurikabe puzzle."; throw e; }
-const { W, H, clues } = info;
+catch (e) { $('boardWrap').textContent = "This link isn't a valid Train Tracks puzzle."; throw e; }
+const { W, H, rowClue, colClue, givens } = info;
 $('size').innerHTML = '<b>' + W + ' × ' + H + '</b> <span class="small">(columns × rows)</span>';
-const adapter = createNurikabeAdapter({ W, H, clues, getGrid: () => loadSettings().grid !== false, getSurface: () => loadSettings().surface !== false, getChrome: () => resolveChrome(loadSettings().boardStyle, currentTheme()) });
+const adapter = createTrainTracksAdapter({ W, H, rowClue, colClue, givens, getGrid: () => loadSettings().grid !== false, getSurface: () => loadSettings().surface !== false, getChrome: () => resolveChrome(loadSettings().boardStyle, currentTheme()) });
 // Click-solve test hook (dev-tools/browser-checks/click-solve.mjs).
-window.__gdpSolverClicks = () => adapter.solverClicks(solve(W, H, clues, 1).state);
+window.__gdpSolverClicks = () => adapter.solverClicks(solve(W, H, rowClue, colClue, givens, 1).pieces);
 const progressKey = (s = '') => PROGRESS_PREFIX + (new URLSearchParams(location.search).get('id') || '') + s;
 const checkpointKey = () => progressKey('#checkpoint');
 let timerStarted = false, timerElapsed = 0, timerLast = 0, timerSavedAt = 0;
@@ -87,7 +87,7 @@ function saveCheckpoint() { if (adapter.isSolved()) return; try { localStorage.s
 function loadCheckpoint() { let s = null; try { s = JSON.parse(localStorage.getItem(checkpointKey()) || 'null'); } catch (e) {} if (!s) return; adapter.reset(); adapter.decodeState(s.state); timerElapsed = s.time || 0; timerStarted = !!s.started; timerLast = performance.now(); saveTimer(); saveState(); board.clearHistory(); board.render(); renderTimer(); if (adapter.isSolved()) showMessage(); pointStatus('Save point loaded.'); }
 function showMessage() { const el = $('msg'); el.textContent = decryptMessage(info.enc, info.msgType, adapter.grid()); el.style.display = 'block'; }
 function reset() { adapter.reset(); localStorage.removeItem(progressKey()); $('msg').style.display = 'none'; timerStarted = false; timerElapsed = 0; localStorage.removeItem(progressKey('#time')); board.clearHistory(); board.render(); renderTimer(); }
-function clearAllProgress() { if (!confirm('Clear saved progress?\n\nDeletes progress, timers and save points for ALL Nurikabe puzzles on this device. Settings are kept. This cannot be undone.')) return; for (const k of Object.keys(localStorage)) if (k.indexOf(PROGRESS_PREFIX) === 0) localStorage.removeItem(k); reset(); updateCheckpoint(); pointStatus('Saved progress cleared.'); }
+function clearAllProgress() { if (!confirm('Clear saved progress?\n\nDeletes progress, timers and save points for ALL Train Tracks puzzles on this device. Settings are kept. This cannot be undone.')) return; for (const k of Object.keys(localStorage)) if (k.indexOf(PROGRESS_PREFIX) === 0) localStorage.removeItem(k); reset(); updateCheckpoint(); pointStatus('Saved progress cleared.'); }
 const board = mountBoard($('boardWrap'), adapter, {
   onChange: () => { if (!adapter.isSolved() && adapter.hasAny()) timerStarted = true; saveState(); },
   onHistoryChange: (u, r) => { $('undoBtn').disabled = u === 0; $('redoBtn').disabled = r === 0; },

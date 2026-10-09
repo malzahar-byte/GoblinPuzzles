@@ -106,6 +106,9 @@ The v12 rows below are still valid where their code did not change. The v13_Logi
 | `browser-checks/click-solve.mjs` — all 8 playable puzzles incl. Nurikabe | v13_Logic, 2026-10-08 | pass — 8/8 solve by clicks, message shown, no page errors |
 | `Nurikabe/test-nurikabe.mjs` | v13_Logic, 2026-10-08 | pass |
 | Owner's local runner, **Quick** job (serves, injects heartbeat, runs the gate, writes `TEST-RESULTS.md`) | 2026-10-08, from the agent sandbox | pass — gate reported 12 pass / 0 fail / 0 unrun; the Windows-only parts are the owner's |
+| `check-all.mjs` after the message-seeded conversion (6 puzzles) and Train Tracks | 2026-10-09 | pass — 13 pass, 0 fail, 0 unrun (2 slow not run); includes `TrainTracks/test-traintracks.mjs` |
+| `check-integration.mjs` after the Train Tracks folder | 2026-10-09 | pass (91 files checked) |
+| `browser-checks/click-solve.mjs` — 9 playable puzzles incl. Train Tracks | not run in this sandbox | owner runs it via `Run-Local` → Browser; no browser tooling here (R17) |
 
 ## Known sandbox limits
 

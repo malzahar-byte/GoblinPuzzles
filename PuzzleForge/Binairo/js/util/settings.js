@@ -1,5 +1,5 @@
 // Binairo's own settings: wraps the shared settings store.
-import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.9logic';
+import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.10logic';
 const KEY = 'gdp-binairo-settings';
 export const SETTINGS_KEY = KEY;
 export const PROGRESS_PREFIX = 'gdp-binairo:';

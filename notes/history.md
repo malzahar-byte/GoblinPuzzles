@@ -135,3 +135,25 @@ Append only; a correction is a new entry, never an edit.
   their per-run `build …`), so a copied-back result always says which version produced it.
 - RAN: `node dev-tools/check-all.mjs` → 12 pass, 0 fail, 0 unrun (2 slow Pictogram sweeps not run).
   Pushed to `main`.
+
+## 2026-10-09 — Cloud_Logic — message-seeded links everywhere; Train Tracks shipped
+
+- Owner direction: "same message ⇒ same puzzle" is a theme of the project, and old link versions
+  are never a reason to keep code alive. All six board-storing puzzles moved to **link version 2**
+  in six small commits: Akari (13.0.3logic), Hashi (13.0.4), Skyscrapers (13.0.5), Binairo
+  (13.0.6), Futoshiki (13.0.7), Nurikabe (13.0.8). Each stores a message-derived seed, rebuilds
+  its board inside `parseLink`, seeds its creator from the message (`encodeFromMessage`), deletes
+  its v1 decoder *and* its board-storing encoder, and got a regenerated Forge Test-Mode link; the
+  old v1 ids are asserted rejected in the tests. Two determinism fixes fell out of it: Futoshiki's
+  generator dedupe cap is now a solve count instead of wall-clock time (a seed must always rebuild
+  the same board), and for Train Tracks the same. Binairo's hand-solvability filter is unchanged.
+- **Train Tracks shipped** (13.0.9, 13.0.10): the WIP solver was debugged. Both bugs were in the
+  builder, not the search — (1) `randomLoop` inserted an "ear" cell adjacent to both ends of a loop
+  edge, which no grid cell can be (adjacent cells share no common neighbour), so every generated
+  loop was broken; the loop now grows by pushing one edge outward; (2) `piecesFromLoop` assumed
+  every step went east or south and swapped sides on right-to-left/upward steps. Then the puzzle
+  was finished end to end: seeded link v2 from the start, shared-shell board adapter (click cycle,
+  locked givens, margin counts), player, creator, settings util, Node test, Forge entry and a
+  click-solve entry.
+- RAN: `node dev-tools/check-all.mjs` → 13 pass, 0 fail, 0 unrun (2 slow Pictogram sweeps not
+  run); `node dev-tools/check-integration.mjs` → pass, 91 files. Pushed to `main`.

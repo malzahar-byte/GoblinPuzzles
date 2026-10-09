@@ -8,8 +8,9 @@
 //
 // A piece is a bitmask of the sides it joins: N=1, E=2, S=4, W=8. Legal pieces join exactly two
 // sides, so there are six of them plus the empty cell.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.9logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.9logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.10logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.10logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.10logic';
 
 export const DIR = { N: 1, E: 2, S: 4, W: 8 };
 // index 0 = empty, 1..6 = the six pieces (NS, EW, NE, NW, SE, SW)
@@ -255,41 +256,69 @@ export function generate(W, H, rng = Math.random, opts = {}) {
     return null;
 }
 
-// ---- link codec: per cell a 3-bit piece code (0 empty, 1..6 piece, 7 unknown), then the clues
+// ---- link codec: message-seeded, version 2 ----
+//
+// The link stores the seed, never the board: the same message + size always gives the same puzzle
+// and the same link, and parseLink rebuilds the clues and givens from the seed. Only version 2 is
+// read; there is no v1 decoder (invariant 2 — old versions are retired, not kept readable).
 const PIECE_INDEX = (p) => PIECES.indexOf(p);
 const keyBits = (solution) => bitsFrom(solution.map(p => (PIECE_INDEX(p) | 0)));
 
-export function encodeLink(W, H, rowClue, colClue, givens, message, msgType = 0) {
-    const res = solve(W, H, rowClue, colClue, givens, 2);
+export const LINK_VERSION = 2;
+
+export function seedFromMessage(message) {
+    return hash(Array.from(message).map(charToNum)) & 0x7fffffff;
+}
+
+export function generateFromSeed(W, H, seed) {
+    return generate(W, H, getRandomizer(seed), { tries: 40 });
+}
+
+// The message hash, advanced until it yields a unique puzzle — deterministic for the same input.
+export function seedForMessage(W, H, message, tries = 4000) {
+    let seed = seedFromMessage(message);
+    for (let i = 0; i < tries; i++) {
+        if (generateFromSeed(W, H, seed)) return seed;
+        seed = (seed + 1) & 0x7fffffff;
+    }
+    return -1;
+}
+
+export function encodeSeededLink(W, H, seed, message, msgType = 0) {
+    const p = generateFromSeed(W, H, seed);
+    if (!p) throw new Error('No unique puzzle for this seed');
+    const res = solve(W, H, p.rowClue, p.colClue, p.givens, 2);
     if (res.aborted || res.count !== 1) throw new Error('Puzzle must have exactly one solution');
     const enc = lockMessage(message, msgType, keyBits(res.pieces));
-    const g = new BitSeq();
-    for (let i = 0; i < W * H; i++) g.appendNum(givens[i] === UNKNOWN ? 7 : PIECE_INDEX(givens[i]), 3);
-    const rc = new BitSeq();
-    for (let r = 0; r < H; r++) rc.appendNum(rowClue[r] < 0 ? W : rowClue[r], 5);
-    for (let c = 0; c < W; c++) rc.appendNum(colClue[c] < 0 ? H : colClue[c], 5);
-    const len = 6 + 3 + 6 + 6 + W * H * 3 + (W + H) * 5 + 1 + enc.length();
+    const len = 6 + 3 + 6 + 6 + 31 + 1 + enc.length();
     const gap = (6 - len % 6) % 6;
-    const b = new BitSeq().appendNum(0, 6).appendNum(gap, 3).appendNum(0, gap).appendNum(W - 3, 6).appendNum(H - 3, 6);
-    b.append(g.get()).append(rc.get()).appendNum(msgType, 1).append(enc.get());
+    const b = new BitSeq().appendNum(LINK_VERSION - 1, 6).appendNum(gap, 3).appendNum(0, gap)
+        .appendNum(W - 3, 6).appendNum(H - 3, 6)
+        .appendNum(seed, 31).appendNum(msgType, 1).append(enc.get());
     return b.getShuffled().toAlphas();
+}
+
+// What a creator calls: message (+ size) -> the link, deterministically.
+export function encodeFromMessage(W, H, message, msgType = 0) {
+    const seed = seedForMessage(W, H, message);
+    if (seed < 0) throw new Error('Could not seed a unique puzzle for this message at this size');
+    return encodeSeededLink(W, H, seed, message, msgType);
 }
 
 export function parseLink(id) {
     const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
     const version = 1 + rd.readNum(6);
-    if (version !== 1) throw new Error('Unknown Train Tracks link version ' + version);
+    if (version !== LINK_VERSION) throw new Error('Unknown Train Tracks link version ' + version);
     rd.readNum(rd.readNum(3));
     const W = rd.readNum(6) + 3, H = rd.readNum(6) + 3;
     if (W > MAX_SIDE || H > MAX_SIDE) throw new Error('Train Tracks link too large');
-    const givens = [];
-    for (let i = 0; i < W * H; i++) { const v = rd.readNum(3); givens.push(v === 7 ? UNKNOWN : PIECES[v]); }
-    const rowClue = [];
-    for (let r = 0; r < H; r++) { const v = rd.readNum(5); rowClue.push(v === W ? -1 : v); }
-    const colClue = [];
-    for (let c = 0; c < W; c++) { const v = rd.readNum(5); colClue.push(v === H ? -1 : v); }
+    // Seeded link: clues and givens are rebuilt from the seed, never stored.
+    const seed = rd.readNum(31);
     const msgType = rd.readNum(1);
-    return { version, W, H, rowClue, colClue, givens, msgType, enc: new BitSeq(rd.read()) };
+    const enc = new BitSeq(rd.read());
+    const p = generateFromSeed(W, H, seed);
+    if (!p) throw new Error('Seeded Train Tracks link does not generate a puzzle');
+    return { version, W, H, rowClue: p.rowClue, colClue: p.colClue, givens: p.givens, seed, msgType, enc };
 }
 
 export const decryptMessage = (enc, msgType, pieces) =>

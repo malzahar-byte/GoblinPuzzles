@@ -48,6 +48,7 @@ const PLANNERS = {
     Futoshiki: `() => window.__gdpSolverClicks()`,
     Nonogram: `() => window.__gdpSolverClicks()`,
     Nurikabe: `() => window.__gdpSolverClicks()`,
+    TrainTracks: `() => window.__gdpSolverClicks()`,
 };
 
 // Same links as PuzzleForge/index.html TEST_LINKS (the Test Mode examples the owner keeps there).
@@ -60,6 +61,7 @@ const TESTS = [
     ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=Ez_F525GqUHwU-gEpo-Vgfn'],
     ['Nonogram', '/PuzzleForge/Nonogram/index.html?id=EkjCQkVo_E1zztIsWQNdH2j2pF'],
     ['Nurikabe', '/PuzzleForge/Nurikabe/index.html?id=glIVkgqnE0N-t8iHGo__a22c3bs'],
+    ['TrainTracks', '/PuzzleForge/TrainTracks/index.html?id=-OMw6O3dR-SBG-ocayc20nz'],
 ];
 
 const [root, portArg] = [process.argv[2], process.argv[3]];

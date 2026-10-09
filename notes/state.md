@@ -23,6 +23,15 @@ legacy decoders are removed; R7 now steps `GDP_BUILD` on every commit through
 now spells out "same message + options ⇒ same puzzle and same link"; R16 answers are read, reasoned
 and written in the agent's own words; R17 agent tests must be few, easy, deterministic and fail
 only for a real defect. Akari became the first message-seeded link (`LINK_VERSION = 2`).
+
+Source note for the v13_Logic fourth round (2026-10-09, owner direction "same message ⇒ same
+puzzle"): **every pointer/track puzzle now derives its link from the message.** Akari, Hashi,
+Skyscrapers, Binairo, Futoshiki and Nurikabe moved to link version 2 (the link stores the
+message-derived seed, the board is rebuilt from it, `encodeFromMessage`) and their v1 decoders
+were deleted — the same message + size gives the same puzzle and the same link. Train Tracks
+shipped seeded from the start. Their Forge Test-Mode links were regenerated (the old v1 ids are
+retired and rejected). `dev-tools/bump-build.mjs` steps `GDP_BUILD` on every commit and
+`TEST-RESULTS.md` names the build it ran against.
 `TEST-RESULTS.md` now names the build it ran on.
 
 Source note for the v13_Logic second round (2026-10-08, owner review): the reload-renders-unsolved
@@ -35,21 +44,18 @@ The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser check
 
 ## In flight (save-point state — updated at every commit, cleared when the work lands)
 
-- **Train Tracks** — `PuzzleForge/TrainTracks/js/traintracks-logic.js` only (WIP commit `139f84e`).
-  The loop builder works; **`solve()` reports 0 solutions on a valid loop, so `generate()` returns
-  null** — mid-debug, `__ttDbg2` hooks still in the file. No board/player/creator/test/Forge entry.
-  Pick up at `solve()`.
-- **Message-deterministic generation** — the theme, now invariant 1: same message + options ⇒ same
-  puzzle and same link. Nonogram/Pictogram already derive their seed from the message; **Akari is
-  converted** (link v2 stores the seed, board regenerated; `encodeFromMessage`). Hashi,
-  Skyscrapers, Binairo, Futoshiki and Nurikabe still use `Math.random` and store the board in a v1
-  link — convert them the same way (v2 only; no legacy decoders, invariant 2). Train Tracks is
-  built seeded from the start. Plan in `backlog.md`.
-- **Pictogram / Nonogram settings panel** — both still hand-wire the panel in `player.js` (old
-  markup, `boardSelect` id, no "Show grid"). They are on the shared board shell and shared palettes;
-  only this migration is missing. See `backlog.md`.
+- **Pictogram / Nonogram settings panel** — the only build item left in this round. Both still
+  hand-wire the panel in `player.js` (old markup, `boardSelect` id, no "Show grid") instead of
+  `shared/gdp-settings-panel.js`. They are on the shared board shell and shared palettes; only this
+  migration is missing. See `backlog.md`.
+- **Owner's runner jobs** — the new hard checks (Train Tracks in the Browser job, the seeded-link
+  checks in Quick) must be confirmed by the owner's next `Run-Local` run; results come back in
+  `TEST-RESULTS.md`.
 - **Crossword** — not started; blocked on one decision: it has no unique solution, so invariant 4
   cannot apply as-is. Options in `backlog.md`.
+- **Landed this round (cleared from In flight):** message-seeded links v2 for Akari, Hashi,
+  Skyscrapers, Binairo, Futoshiki, Nurikabe (v1 decoders deleted, Forge links regenerated) and
+  Train Tracks shipped end to end (`PuzzleForge/TrainTracks/`).
 
 ## shared/ — generic layer, reused by every puzzle
 
@@ -69,7 +75,7 @@ settings/progress, secret lock, asset versioning.
 - `gdp-secret.js` — shared XOR secret lock; see `interfaces/secret-lock.md`.
 - `gdp-ui.js` — `setupSettingsDock(dock)` (Escape/outside-click close); no Bootstrap needed.
 - `gdp-settings-panel.js` — `setupBoardSettingsPanel(opts)`: the one settings panel (themes, board
-  style, board background, show grid, timer, clear progress). Six puzzle pages call it; only
+  style, board background, show grid, timer, clear progress). Seven puzzle pages call it; only
   Pictogram and Nonogram still hand-wire their own markup (see the In-flight block).
 - `gdp-bitseq.js`, `gdp-math-utils.js` — bit-level encode/decode, character set, seeded shuffle.
 - `gdp-board.js` + `gdp-board.css` — the shared SVG board shell; see
@@ -118,12 +124,18 @@ settings/progress, secret lock, asset versioning.
   Node test `dev-tools/test-board-hit.mjs` covers it, and the browser click-solve gate proves it
   end to end by clicking exact bridge midpoints.
 - Node test `dev-tools/test-hashi.mjs` covers `hashi-logic.js`.
+- **Link is message-seeded v2 (2026-10-09):** `encodeFromMessage(W, H, message)` stores the seed, so
+  the same message + size gives the same puzzle and the same link; `parseLink` rebuilds the islands
+  from the seed and rejects v1 ids (no legacy decoder). The Forge example is 5×5 "Well done!".
 
 ## PuzzleForge/Akari/ — built (reference "puzzle kit")
 
 - `js/akari-logic.js` (walls + clues, lamp/mark states, unique generator + solver, link codec,
   secret), `js/akari-board.js` (shell adapter, position-based hit-test), `js/player.js` inlined in
   `index.html`, `creator.html`, `js/util/settings.js`, `dev-tools/test-akari.mjs`.
+- **Link is message-seeded v2 (2026-10-09):** `encodeFromMessage(R, C, message)`; the v1 decoder and
+  the board-storing `encodeLink` are gone, and a v1 id is rejected in the test. Forge example:
+  7×7 "Well done!".
 - Verified 2026-10-06: renders, settings dock opens, and solves by clicks → message revealed.
 
 ## PuzzleForge/Skyscrapers/, Binairo/, Futoshiki/ — live on the shared shell
@@ -139,6 +151,10 @@ settings/progress, secret lock, asset versioning.
   Binairo's rules text now states the no-three-in-a-row ban and the generator rejects boards a human
   cannot start; Futoshiki's generator drops signs while the solution stays unique, so a board no
   longer shows a sign on every edge.
+- **Link is message-seeded v2 (2026-10-09, all three):** `encodeFromMessage`, seeds only in the
+  link, v1 decoders deleted; Futoshiki's dedupe pass is capped by a solve count, not wall-clock
+  time, so a seed always rebuilds the same board. Forge examples: Skyscrapers 4×4 "Nice work!",
+  Binairo 6×6 "Nice work!", Futoshiki 5×5 "Nice work!".
 - **KenKen** specced, not built.
 
 ## PuzzleForge/Nurikabe/ — live (added 2026-10-08)
@@ -151,13 +167,32 @@ settings/progress, secret lock, asset versioning.
   connected region with no 2×2 block.
 - **Verified 2026-10-08:** renders, solves by clicking in the click-solve gate and reveals
   "Cloud Logic 1".
+- **Link is message-seeded v2 (2026-10-09):** `encodeFromMessage(W, H, message)`, v1 decoder
+  deleted; Forge example 8×8 "Cloud Logic 1".
+
+## PuzzleForge/TrainTracks/ — live (added 2026-10-09)
+
+- `js/traintracks-logic.js` (pure: single-loop generator with a limit-2 uniqueness proof, rule
+  check, solver, message-seeded link codec, secret), `js/traintracks-board.js` (shared-shell
+  adapter: click cycles empty → straight → straight → the four corners → empty, right-click clears,
+  pre-filled pieces are locked, row/column counts sit in the margins), player inlined in
+  `index.html`, `creator.html`, `js/util/settings.js` (own key `gdp-traintracks-settings`,
+  progress prefix `gdp-traintracks:`), `dev-tools/test-traintracks.mjs`. Cap: `MAX_SIDE` 12.
+- **Generator bug fixed on the way in (2026-10-09):** the first loop builder inserted an "ear" no
+  grid cell can have — two adjacent cells share no common neighbour — so every loop it built was
+  broken and `solve()` returned 0 on a valid board. The loop is now grown by pushing one loop edge
+  outward, and `piecesFromLoop` reads each side from the coordinates rather than from the loop
+  order (a right-to-left step used to swap east and west). When several clues are dropped, a cell
+  the puzzle pre-fills is locked in the board adapter.
+- Link is message-seeded v2 from the start (`encodeFromMessage`); Forge example 6×6 "Well done!".
 
 ## PuzzleForge/ — landing page
 
 `index.html` lists every puzzle with status, links the live and in-progress ones, and has a Test
-Mode section with a ready example for every playable puzzle (Pictogram, Nonogram, Hashi, Akari,
-Skyscrapers, Binairo, Futoshiki). 12 entries, 8 Test-Mode links (Pictogram, Nonogram, Hashi, Akari, Skyscrapers, Binairo,
-Futoshiki, Nurikabe), all resolving (2026-10-08). **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
+Mode section with a ready example for every playable puzzle. 13 entries, 9 Test-Mode links
+(Pictogram, Nonogram, Hashi, Akari, Skyscrapers, Binairo, Futoshiki, Nurikabe, Train Tracks) — the
+pointer/track ones regenerated as message-seeded v2 on 2026-10-09, the last two still with their
+own codecs. **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
 from `…/GoblinPuzzles/PuzzleForge/`.
 
 ## dev-tools/
@@ -178,7 +213,7 @@ from `…/GoblinPuzzles/PuzzleForge/`.
 - **Owner's local runner (not part of a version):** `Run-Local.cmd` + `dev-tools/local-runner.mjs`
   + `package.json` + `.gitignore`. Double-clicking it serves the folder on `127.0.0.1`, opens the
   Forge in the owner's Chrome, adds a "Local tests" section with **Quick** (the gate), **Full** (the
-  gate, then the two slow Pictogram sweeps with no timeout) and **Browser** (all 8 playable puzzles
+  gate, then the two slow Pictogram sweeps with no timeout) and **Browser** (all 9 playable puzzles
   solved by real clicks) buttons, and writes `TEST-RESULTS.md` at the folder root. Its only
   dependency is `playwright-core` (no browser download) and it drives the installed Chrome/Edge; the
   window closes when the browser does. In-flight jobs are never interrupted. See `testing.md`.

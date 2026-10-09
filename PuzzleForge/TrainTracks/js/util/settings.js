@@ -1,12 +1,11 @@
-// Hashi's own settings: wraps the shared Goblin Does Puzzles settings store. Made from
-// shared/puzzle-template/settings.js.
+// Train Tracks' own settings: wraps the shared settings store. Made from shared/puzzle-template.
 import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.10logic';
 
-const KEY = 'gdp-hashi-settings';
+const KEY = 'gdp-traintracks-settings';
 export const SETTINGS_KEY = KEY; // the ONLY place this string is allowed to be written
-export const PROGRESS_PREFIX = 'gdp-hashi:'; // every saved-progress key starts with this
+export const PROGRESS_PREFIX = 'gdp-traintracks:'; // every saved-progress key starts with this
 
-const DEFAULTS = { theme: null, board: 'panel', grid: true, boardStyle: 'classic', showTimer: true };
+const DEFAULTS = { theme: null, surface: true, grid: true, showTimer: true, boardStyle: 'classic' };
 const store = createSettingsStore(KEY, DEFAULTS);
 
 export const loadSettings = store.load;
