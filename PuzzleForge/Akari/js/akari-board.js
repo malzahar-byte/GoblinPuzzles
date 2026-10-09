@@ -1,5 +1,5 @@
 // Akari adapter for the shared board shell. Board colours come from shared resolveChrome().
-import { CELL, ACTION_TYPE, isSolved as ruleSolved } from './akari-logic.js?v=13.0.7logic';
+import { CELL, ACTION_TYPE, isSolved as ruleSolved } from './akari-logic.js?v=13.0.8logic';
 const M = 6, CS = 40;
 export function createAkariAdapter({ R, C, walls, nums, getGrid, getChrome, getSurface }) {
   const cells = new Array(R * C).fill(CELL.EMPTY);

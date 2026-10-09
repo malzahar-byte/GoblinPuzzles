@@ -59,7 +59,7 @@ const TESTS = [
     ['Binairo', '/PuzzleForge/Binairo/index.html?id=UYoVSdZVsWq2ijTjWuA2Jk'],
     ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=Ez_F525GqUHwU-gEpo-Vgfn'],
     ['Nonogram', '/PuzzleForge/Nonogram/index.html?id=EkjCQkVo_E1zztIsWQNdH2j2pF'],
-    ['Nurikabe', '/PuzzleForge/Nurikabe/index.html?id=-g-g--ccFqi-s-qa-kE----Ea-agEpEgio-olaK-_E-qQ------Eca--d-IcdacF-g-uF-Fg---'],
+    ['Nurikabe', '/PuzzleForge/Nurikabe/index.html?id=glIVkgqnE0N-t8iHGo__a22c3bs'],
 ];
 
 const [root, portArg] = [process.argv[2], process.argv[3]];

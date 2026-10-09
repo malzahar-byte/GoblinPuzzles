@@ -11,8 +11,9 @@
 // The generator builds a solution first (random islands, then the sea), reads the clues off it,
 // and ships the board only when a limit-2 search proves the clues have exactly one solution —
 // the message lock depends on that (notes/AGENTS.md invariant 4).
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.7logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.7logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.8logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.8logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.8logic';
 
 export const CELL = { UNKNOWN: 0, ISLAND: 1, SEA: 2 };
 export const ACTION_TYPE = { CELL: 0 };
@@ -236,33 +237,68 @@ export function generate(W, H, rng = Math.random, opts = {}) {
     return null;
 }
 
-// ---- link codec (version 1): header + 5 bits per clue cell + session framing ----
+// ---- link codec: message-seeded, version 2 ----
+//
+// The link stores the seed, never the board: the same message + size always gives the same puzzle
+// and the same link, and parseLink rebuilds the clues from the seed. Only version 2 is read;
+// there is no v1 decoder (invariant 2 — old versions are retired, not kept readable).
 const keyBits = (solution) => bitsFrom(solution.map(v => v === CELL.ISLAND ? 1 : 0));
 
-export function encodeLink(W, H, clues, message, msgType = 0) {
-    const res = solve(W, H, clues, 2);
+export const LINK_VERSION = 2;
+
+export function seedFromMessage(message) {
+    return hash(Array.from(message).map(charToNum)) & 0x7fffffff;
+}
+
+export function generateFromSeed(W, H, seed) {
+    return generate(W, H, getRandomizer(seed), { tries: 400 });
+}
+
+// The message hash, advanced until it yields a unique puzzle — deterministic for the same input.
+export function seedForMessage(W, H, message, tries = 4000) {
+    let seed = seedFromMessage(message);
+    for (let i = 0; i < tries; i++) {
+        if (generateFromSeed(W, H, seed)) return seed;
+        seed = (seed + 1) & 0x7fffffff;
+    }
+    return -1;
+}
+
+export function encodeSeededLink(W, H, seed, message, msgType = 0) {
+    const p = generateFromSeed(W, H, seed);
+    if (!p) throw new Error('No unique puzzle for this seed');
+    const res = solve(W, H, p.clues, 2);
     if (res.aborted || res.count !== 1) throw new Error('Puzzle must have exactly one solution');
     const enc = lockMessage(message, msgType, keyBits(res.state));
-    const c = new BitSeq();
-    for (let i = 0; i < W * H; i++) c.appendNum(clues[i] | 0, 5);
-    const len = 6 + 3 + 6 + 6 + W * H * 5 + 1 + enc.length();
+    const len = 6 + 3 + 6 + 6 + 31 + 1 + enc.length();
     const gap = (6 - len % 6) % 6;
-    const b = new BitSeq().appendNum(0, 6).appendNum(gap, 3).appendNum(0, gap).appendNum(W - 3, 6).appendNum(H - 3, 6);
-    b.append(c.get()).appendNum(msgType, 1).append(enc.get());
+    const b = new BitSeq().appendNum(LINK_VERSION - 1, 6).appendNum(gap, 3).appendNum(0, gap)
+        .appendNum(W - 3, 6).appendNum(H - 3, 6)
+        .appendNum(seed, 31).appendNum(msgType, 1).append(enc.get());
     return b.getShuffled().toAlphas();
+}
+
+// What a creator calls: message (+ size) -> the link, deterministically.
+export function encodeFromMessage(W, H, message, msgType = 0) {
+    const seed = seedForMessage(W, H, message);
+    if (seed < 0) throw new Error('Could not seed a unique puzzle for this message at this size');
+    return encodeSeededLink(W, H, seed, message, msgType);
 }
 
 export function parseLink(id) {
     const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
     const version = 1 + rd.readNum(6);
-    if (version !== 1) throw new Error('Unknown Nurikabe link version ' + version);
+    if (version !== LINK_VERSION) throw new Error('Unknown Nurikabe link version ' + version);
     rd.readNum(rd.readNum(3));
     const W = rd.readNum(6) + 3, H = rd.readNum(6) + 3;
     if (W > MAX_SIZE || H > MAX_SIZE) throw new Error('Nurikabe link too large');
-    const clues = [];
-    for (let i = 0; i < W * H; i++) clues.push(rd.readNum(5));
+    // Seeded link: the clues are rebuilt from the seed, never stored.
+    const seed = rd.readNum(31);
     const msgType = rd.readNum(1);
-    return { version, W, H, clues, msgType, enc: new BitSeq(rd.read()) };
+    const enc = new BitSeq(rd.read());
+    const p = generateFromSeed(W, H, seed);
+    if (!p) throw new Error('Seeded Nurikabe link does not generate a puzzle');
+    return { version, W, H, clues: p.clues, seed, msgType, enc };
 }
 
 export const decryptMessage = (enc, msgType, cells) =>

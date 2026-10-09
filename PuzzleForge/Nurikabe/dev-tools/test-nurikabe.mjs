@@ -1,7 +1,7 @@
 // Nurikabe tests: generator uniqueness, the rule check, link round-trip and decrypt.
 // The generator is the risky part: it must never ship a board whose clues have a second
 // solution, because the secret message is locked against the solution (AGENTS.md invariant 4).
-import { CELL, generate, solve, isSolved, encodeLink, parseLink, decryptMessage } from '../js/nurikabe-logic.js';
+import { CELL, generate, solve, isSolved, encodeFromMessage, encodeSeededLink, parseLink, decryptMessage } from '../js/nurikabe-logic.js';
 
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let bad = 0;
@@ -46,9 +46,8 @@ for (const [W, H] of [[6, 6], [8, 8], [10, 10]]) {
     check(`${W}x${H} solution satisfies every rule`, isSolved(W, H, p.clues, p.solution));
     check(`${W}x${H} has at least two islands`, p.clues.filter(Boolean).length >= 2);
     const msg = 'Nuri ' + W;
-    const id = encodeLink(W, H, p.clues, msg, 0);
-    const q = parseLink(id);
-    check(`${W}x${H} link round-trips`, q.W === W && q.H === H && q.clues.join(',') === p.clues.join(','));
+    const q = parseLink(encodeFromMessage(W, H, msg, 0));
+    check(`${W}x${H} seeded link round-trips`, q.W === W && q.H === H && q.version === 2);
     const re = solve(q.W, q.H, q.clues, 2);
     // solve() must hand back the player vocabulary (ISLAND/SEA), not its internal group ids:
     // the browser's board, the rule check and the message lock all read that state directly.
@@ -57,6 +56,24 @@ for (const [W, H] of [[6, 6], [8, 8], [10, 10]]) {
     console.log(`${W}x${H}: attempts ${p.attempts}, islands ${p.clues.filter(Boolean).length}, ${took} ms`);
     check(`${W}x${H} generated under 5 s`, took < 5000);
 }
+
+// ---- seeded links: same message + size gives the same puzzle and the same link ----
+const idA = encodeFromMessage(6, 6, 'Cloud Logic 1', 0);
+const idB = encodeFromMessage(6, 6, 'Cloud Logic 1', 0);
+check('seeded: same message + size gives the same link', idA === idB);
+const pA = parseLink(idA);
+check('seeded: link version is 2', pA.version === 2 && pA.W === 6 && pA.H === 6);
+const sA = solve(pA.W, pA.H, pA.clues, 2);
+check('seeded: unique solution', sA.count === 1 && !sA.aborted);
+check('seeded: message decrypts with the solution', decryptMessage(pA.enc, pA.msgType, sA.state) === 'Cloud Logic 1');
+check('seeded: a different message gives a different link', encodeFromMessage(6, 6, 'Another secret', 0) !== idA);
+const pSeed = parseLink(encodeSeededLink(6, 6, 12345, 'Pinned seed', 0));
+check('seeded: pinned seed round-trips', pSeed.seed === 12345 && pSeed.clues.length === 36);
+
+// ---- old link versions are retired, not kept readable (invariant 2) ----
+let rejected = false;
+try { parseLink('-g-g--ccFqi-s-qa-kE----Ea-agEpEgio-olaK-_E-qQ------Eca--d-IcdacF-g-uF-Fg---'); } catch (e) { rejected = true; }
+check('v1 link is rejected (no legacy decoder)', rejected);
 
 console.log(bad ? `${bad} Nurikabe check(s) FAILED` : 'Nurikabe checks: all ok');
 process.exit(bad ? 1 : 0);
