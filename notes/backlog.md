@@ -182,6 +182,10 @@ two `shared/` ones need approval first (R6/R8).
   fill" — the board surface — so with the surface invisible nothing appears until the second click
   paints sea. Same root cause as the line above: give islands a drawn state of their own. →
   `PuzzleForge/Nurikabe/js/nurikabe-board.js`.
+- `proposed` — **Futoshiki test size.** `test-futoshiki.mjs` hardcodes `N = 5`; the creator's range
+  is 4–7 (`creator.html` clamps to it; `state.md` said 4–8 until this triage and was corrected), so
+  the smallest supported size (4×4) should be covered as well. →
+  `PuzzleForge/Futoshiki/dev-tools/test-futoshiki.mjs`.
 - `proposed` — **Train Tracks hides too many clues to look like a puzzle.** The Forge 6×6 example
   has every row count hidden, one visible column count and 5 pre-filled cells; it is unique but
   near-empty. Give the generator a floor (a visible count per row/column, or a minimum count). →

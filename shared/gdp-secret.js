@@ -6,7 +6,7 @@
 //
 // IMPORTANT: BitSeq.getXOR cycles the shorter sequence, so the key MUST be exactly as long as the
 // message or the message gets corrupted. `keystream` repeats the solution bits to that length.
-import { BitSeq } from './gdp-bitseq.js?v=13.0.13logic';
+import { BitSeq } from './gdp-bitseq.js?v=13.0.14logic';
 
 // values: array of small ints. bits: how many bits per value.
 export function bitsFrom(values, bits = 1) {

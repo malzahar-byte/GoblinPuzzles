@@ -154,7 +154,9 @@ settings/progress, secret lock, asset versioning.
 - Each has `js/<name>-logic.js` (pure model, move rules, solved check, unique generator, link
   codec), `dev-tools/test-<name>.mjs`, a player and creator, all on `resolveChrome()` chrome and
   position-based hit-testing.
-- Size caps: Skyscrapers 4–9, Futoshiki 4–8, Binairo even 6–12.
+- Size caps: Skyscrapers 4–9, Futoshiki 4–7, Binairo even 6–12 (the creators' own min/max; the
+  Futoshiki line here said 4–8 until 2026-10-09, when the creator was checked — `creator.html`
+  clamps to 4–7).
 - **Verified 2026-10-06:** the three player pages render, open settings, and solve by clicks →
   message revealed. (Earlier "shipped broken / unverified" notes are superseded.)
 - **Second round (2026-10-08):** Skyscrapers' rows and columns can be clicked to mark a line solved

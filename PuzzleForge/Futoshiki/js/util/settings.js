@@ -1,5 +1,5 @@
 // Futoshiki's own settings: wraps the shared settings store.
-import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.13logic';
+import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.14logic';
 const KEY = 'gdp-futoshiki-settings';
 export const SETTINGS_KEY = KEY;
 export const PROGRESS_PREFIX = 'gdp-futoshiki:';
