@@ -65,9 +65,10 @@ The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser check
   "Create your own puzzle" always goes to the Forge; Test Mode alphabetical with greyed
   placeholders; Hashi migrated to the common shape; the runner keeps running until Edge closes and
   gains a Generator-QA job. Deferred: the Pictogram `test-image.mjs` `photo` failure and the
-  Pictogram/Nonogram divergence research. Refuted: Nurikabe's Forge example is unique (13 clues); the
-  owner's own 5×5 board really does break two rules, but the page should have said which — that
-  feedback gap is an approved fix.
+  Pictogram/Nonogram divergence research. **Corrected later the same day (see `history.md`, third
+  entry): with every cell set, the owner's own 5×5 board *is* the unique solution and passes the rule
+  check — the page's silence is the bug, most likely because an unset cell looks exactly like an
+  island (both are "no fill").** Nurikabe's Forge example is unique (13 clues), as recorded.
 
 
 ## shared/ — generic layer, reused by every puzzle

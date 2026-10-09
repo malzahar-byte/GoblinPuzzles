@@ -266,3 +266,27 @@ Append only; a correction is a new entry, never an edit.
   (`history.md`, `backlog.md`, `state.md`) plus this round's `AGENTS.md`, `README.md` and
   `decisions/0005`. Everything else in those commits is the R7 version step re-pointing `?v=`
   strings, which is why the diffs look like they touch 41 unrelated files.
+
+## 2026-10-09 — Cloud_Cline_1 — correction (R9): the owner's Nurikabe board is the solution
+
+- **I was wrong two entries up.** I read the owner's screenshot as leaving row 3 all sea and told him
+  his board broke two rules. It does not. With the two row-3 cells set (islands at `(3,1)` and
+  `(3,3)`), the board **is the generator's unique solution**: re-checked read-only with the puzzle's
+  own rule check — `isSolved` → true, and the message decrypts to "Well done!". My "breaks the island
+  size rule and the 2×2 rule" claim is withdrawn; it came from misreading the image, not from the code.
+- **So the silence is the real bug.** Nothing else in the pipeline explains it: the shared shell fires
+  `onSolved` the moment `adapter.isSolved()` first returns true, and the page then decrypts and shows
+  the message. The one state that fits the screenshot is **a cell that was never clicked**: an unset
+  cell and an island cell are drawn identically (both are just the board surface), so the player can
+  believe the board is finished while cells are still unset — and with every cell unset the puzzle
+  can never complete. That also explains the older "first click does nothing" report: click one turns
+  unset → island, which paints nothing.
+- **The rules themselves are not hallucinated.** The implementation matches standard Nurikabe
+  (numbered cell = island of that size, one clue per island, islands never touch orthogonally, one
+  connected sea with no 2×2 block; a unique solution is expected) and the page's own rules text says
+  the same. The puzzle in question has exactly one solution and the check accepts it when filled.
+- **Owner's two clarifications this round:** (1) the green/red "satisfied / broken" marking he pointed
+  at in `puzzlemadness.co.uk/traintracks` is wanted as a **shared accessibility feature, on by default
+  in every puzzle, with a settings toggle** — recorded with its design in `decisions/0005`; (2)
+  "the game detects a correct solution" is not a new feature, it is the existing solved state plus the
+  secret message.

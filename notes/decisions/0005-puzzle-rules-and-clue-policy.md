@@ -37,13 +37,26 @@ Tricky, Extreme)** that change how much is given. Generator must target a tier, 
 (every sign that uniqueness does not need — today's behaviour) is wrong.
 - **Nurikabe** — every numbered cell is an island of exactly that size, one clue per island, islands
 never touch orthogonally, all other cells are sea, the sea is one connected region and contains no
-2×2 block. A unique solution is expected (matches the standard puzzle). New requirement: a fully
-filled board that breaks a rule must **say which rule it breaks** — today it just never solves.
+2×2 block. A unique solution is expected (matches the standard puzzle). Two requirements recorded
+2026-10-09 after the owner's 5×5 report: **an unset cell must look different from an island** (today
+both are "no fill", so a player cannot see a cell they have not clicked), and **a board that breaks a
+rule must say which rule it breaks**.
 - **Akari / Skyscrapers / Binairo** — rules as printed on their pages (they are the standard
 puzzles). Binairo already rejects boards a human cannot start, which is the pattern the others
 should follow for human-solvability.
 - **Hashi / Pictogram / Nonogram** — rules as printed; both are being re-examined (Hashi's migration
 is approved; Pictogram/Nonogram's codec/renderer divergence is a research step).
+
+## Mistake highlighting — shared, on by default (owner, 2026-10-09)
+
+The owner's reference (`puzzlemadness.co.uk/traintracks`) marks a satisfied row/column count green and
+a broken one red. He wants that **as a shared feature of nearly every puzzle**, not a per-puzzle
+extra: implemented once in `shared/`, **enabled by default everywhere**, exposed as an optional
+settings toggle so it can be turned off later. What the puzzle supplies is *what* is wrong (which
+cells/lines break one of its rules); the shared layer owns the colours and the drawing, like every
+other style decision. "The game detects a correct solution" is *not* this feature — that is the
+existing solved state plus the secret message, already implemented and already tested by
+`click-solve.mjs`.
 
 ## Marks
 

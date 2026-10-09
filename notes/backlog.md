@@ -289,3 +289,19 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
 - `done` — **Rules updated:** R15 now sends notes/documentation commits to `main`; R12 names
   `decisions/` as the home for a puzzle's rules, clue policy, difficulty and generator approach;
   `README.md` lists `decisions/0005`.
+
+## Owner direction (2026-10-09, fourth round) — after the Nurikabe re-check
+
+- `approved` — **Mistake highlighting, shared and on by default.** Owner: the green/red marking from
+  `puzzlemadness.co.uk/traintracks` is "an accessibility/settings feature I want in most puzzles as an
+  optional toggle, so the puzzle shows if a user's input broke some rule". Implement once in
+  `shared/`, **enabled by default in every puzzle**, with a settings toggle (can be turned off by
+  default later). The puzzle reports what is wrong (which cells/lines break a rule); the shared layer
+  owns the colours and drawing. → `shared/`, `interfaces/`, then each `*-board.js`.
+- `approved` — **An unset cell must not look like an island.** In Nurikabe today both are "no fill",
+  so a player cannot see a cell they have not clicked and can believe a board is finished when it is
+  not — which is exactly the owner's 5×5 report (his board *is* the solution once every cell is set).
+  Give the unset state its own visible look (and audit the other puzzles for the same trap). →
+  `PuzzleForge/*/js/*-board.js`.
+- `withdrawn` — the earlier claim that the owner's 5×5 Nurikabe board broke two rules; withdrawn and
+  corrected in `history.md` (2026-10-09, third entry) and `state.md`.
