@@ -1,6 +1,6 @@
 // Hashi (Hashiwokakero) logic: no DOM. islands = [{r,c,n}] sorted row-major; n = bridges needed (1-8).
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.23logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.23logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.24logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.24logic';
 
 // Candidate bridges: each island to its nearest island right and down. `cross` = indexes of edges that would cross it.
 export function findEdges(W, H, islands) {

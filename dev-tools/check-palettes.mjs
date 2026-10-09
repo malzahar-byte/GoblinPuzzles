@@ -1,26 +1,24 @@
 #!/usr/bin/env node
 // Palette contract check — is a palette fit to draw a puzzle on?
 //
-// The palettes were invented by successive agents with no contract, so some of them draw things a
-// player cannot see (owner report, 2026-10-09: "Show board background does not seem to work in many
-// styles"). This file turns "does it look right" into numbers: for every palette in both themes it
-// measures the pairs a puzzle actually draws, against the thresholds in `decisions/0006`.
+// The palettes were written by successive agents with no statement of what they must do, and several
+// of their values drew things a player cannot see (owner report, 2026-10-09: "Show board background
+// does not seem to work in many styles"). `decisions/0006` fixes the contract; this file measures it.
 //
-// Two tiers:
-//   - **enforced** pairs fail the gate (exit 1). Today that is the board-vs-page rule, which is the
-//     defect the owner reported.
-//   - **reported** pairs are the wider contract. They print as a worklist and do not fail the gate
-//     until the palettes are tuned to them (the tuning pass lands with the given/mark/error roles).
-//     `--strict` enforces every pair, which is how this file will run once that pass is done.
+// Every role `resolveChrome()` returns is measured against the floor for what it is used for:
+// text needs 4.5:1, a graphic or a large label 3:1 (WCAG 1.4.11), the thin grid 1.6:1 (a line, not
+// text), and things that merely have to look *different* (board vs page, a given cell vs the board)
+// need a distance of 8-12. A failure here is a colour a player cannot see — so it fails the build.
 //
-// Run from the gate (`dev-tools/check-all.mjs`) and by hand: `node dev-tools/check-palettes.mjs`.
+// Usage: node dev-tools/check-palettes.mjs            (enforce; this is the gate row)
+//        node dev-tools/check-palettes.mjs --report   (print the table, exit 0 — for colour work)
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PALETTES, resolveChrome } from '../shared/gdp-palettes.js';
+import { PALETTES, resolveChrome, buildCellFill } from '../shared/gdp-palettes.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const STRICT = process.argv.includes('--strict');
+const REPORT_ONLY = process.argv.includes('--report');
 
 const css = fs.readFileSync(path.join(ROOT, 'shared', 'gdp-theme.css'), 'utf8');
 const pageBg = {};
@@ -43,86 +41,57 @@ const distance = (a, b) => Math.round((Math.abs(a[0] - b[0]) + Math.abs(a[1] - b
 const lin = (c) => { const s = c / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
 const lum = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
 const ratio = (a, b) => { const x = lum(a), y = lum(b); const [hi, lo] = x > y ? [x, y] : [y, x]; return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100; };
-const over = (fg, bg) => { const a = (fg[3] ?? 255) / 255; return [0, 1, 2].map((i) => Math.round(fg[i] * a + bg[i] * (1 - a))); };
 
-// The contract (thresholds and reasons: decisions/0006-palette-roles-and-contrast.md).
+// role -> [what it draws, the floor, how it is measured]
 const CONTRACT = [
-    { role: 'board vs page background', min: 12, kind: 'distance', enforce: true,
-      why: 'a board that matches the page is a board nobody can see',
-      get: (p, ch, page) => [parse(ch.surface), parse(page)] },
-    { role: 'ink on board', min: 4.5, kind: 'ratio', enforce: false,
-      why: 'numbers and clues are text on the board',
-      get: (p, ch) => [parse(ch.ink), parse(ch.surface)] },
-    { role: 'muted ink on board', min: 3, kind: 'ratio', enforce: false,
-      why: 'muted labels and hint numbers are still read',
-      get: (p, ch) => [parse(p.textMuted), parse(ch.surface)] },
-    { role: 'thin grid on board', min: 1.6, kind: 'ratio', enforce: false,
-      why: '"Show grid" must show a grid',
-      get: (p, ch) => [parse(p.lineThin), parse(ch.surface)] },
-    { role: 'thick grid on board', min: 3, kind: 'ratio', enforce: false,
-      why: 'block separators and the frame',
-      get: (p, ch) => [parse(p.lineThick), parse(ch.surface)] },
-    { role: 'accent on board', min: 4.5, kind: 'ratio', enforce: false,
-      why: 'a filled marker (lamp, sea, node) must be visible on the board',
-      get: (p, ch) => [parse(ch.accent), parse(ch.surface)] },
-    { role: 'accent ink on accent', min: 4.5, kind: 'ratio', enforce: false,
-      why: 'anything drawn on top of an accent marker',
-      get: (p, ch) => [parse(ch.accentInk), parse(ch.accent)] },
-    { role: 'mark colour on board', min: 4.5, kind: 'ratio', enforce: false,
-      why: 'x / dot marks and the excluded state',
-      get: (p, ch) => [parse(p.excludedColor), parse(ch.surface)] },
-    { role: 'hover vs board', min: 8, kind: 'distance', enforce: false,
-      why: 'the pointer highlight must be noticeable',
-      get: (p, ch) => [over(parse(p.hover), parse(ch.surface)), parse(ch.surface)] },
-    { role: 'cell base vs board', min: 10, kind: 'distance', enforce: false,
-      why: 'an unfilled cell must still read as a cell (Pictogram/Nonogram)',
-      get: (p, ch) => [parse(p.cells[0]), parse(ch.surface)] }
+    ['board vs page background', 'the board itself', 12, 'distance', (p, ch, page) => [ch.surface, page]],
+    ['ink on board', 'numbers, clues, letters', 4.5, 'ratio', (p, ch) => [ch.ink, ch.surface]],
+    ['muted ink on board', 'secondary labels, hint numbers', 3, 'ratio', (p, ch) => [ch.muted, ch.surface]],
+    ['thin grid on board', 'the "Show grid" lines', 1.6, 'ratio', (p, ch) => [ch.grid, ch.surface]],
+    ['thick grid on board', 'block separators, the frame', 3, 'ratio', (p, ch) => [ch.gridThick, ch.surface]],
+    ['accent on board', 'a filled marker (lamp, sea, tower)', 3, 'ratio', (p, ch) => [ch.accent, ch.surface]],
+    ['accent ink on accent', 'anything drawn on an accent marker', 4.5, 'ratio', (p, ch) => [ch.accentInk, ch.accent]],
+    ['mark on board', 'x / dot on an excluded cell', 3, 'ratio', (p, ch) => [ch.mark, ch.surface]],
+    ['candidate mark on board', 'the "(?)" pencil mark', 3, 'ratio', (p, ch) => [ch.markCandidate, ch.surface]],
+    ['given vs board', 'a pre-filled cell wash', 12, 'distance', (p, ch) => [ch.given, ch.surface]],
+    ['given vs accent', 'a pre-filled cell must not read as a chosen one', 12, 'distance', (p, ch) => [ch.given, ch.accent]],
+    ['error on board', 'a cell/line that breaks a rule', 3, 'ratio', (p, ch) => [ch.error, ch.surface]],
+    ['satisfied on board', 'a row/column count that is met', 3, 'ratio', (p, ch) => [ch.satisfied, ch.surface]],
+    ['hover vs board', 'the pointer highlight', 8, 'distance', (p, ch) => [ch.over, ch.surface]],
+    ['cell base vs board', 'an unfilled cell (Pictogram/Nonogram)', 10, 'distance', (p, ch) => [buildCellFill(p, [])[0][0], ch.surface]],
+    ['solved vs board', 'the solved background', 1.6, 'ratio', (p, ch) => [ch.solved, ch.surface]]
 ];
 
-let enforcedFailures = 0, contractFailures = 0;
-const worklist = new Map();   // role -> how many palette/theme pairs fail it
+const failures = [];
 const rows = [];
 for (const id of Object.keys(PALETTES)) {
     for (const theme of ['light', 'dark']) {
         const palette = PALETTES[id].both || PALETTES[id][theme] || PALETTES[id].dark;
         const ch = resolveChrome(id, theme);
         const failed = [];
-        for (const c of CONTRACT) {
-            const [a, b] = c.get(palette, ch, pageBg[theme]);
-            if (!a || !b) { failed.push(c.role + ' (unparsable colour)'); enforcedFailures++; continue; }
-            const value = c.kind === 'ratio' ? ratio(a, b) : distance(a, b);
-            if (value >= c.min) continue;
-            failed.push(`${c.role} ${value} < ${c.min}`);
-            contractFailures++;
-            worklist.set(c.role, (worklist.get(c.role) || 0) + 1);
-            if (c.enforce) enforcedFailures++;
+        for (const [role, use, min, kind, get] of CONTRACT) {
+            const [a, b] = get(palette, ch, pageBg[theme]).map(parse);
+            if (!a || !b) { failed.push(`${role} (unparsable)`); failures.push({ id, theme, role }); continue; }
+            const value = kind === 'ratio' ? ratio(a, b) : distance(a, b);
+            if (value >= min) continue;
+            failed.push(`${role} ${value} < ${min}`);
+            failures.push({ id, theme, role, value, min });
         }
         rows.push({ id, theme, failed });
     }
 }
 
-console.log('palette contract — board visibility (enforced) + the wider contract (reported)');
-console.log(`thresholds: decisions/0006   ·   ${Object.keys(PALETTES).length} palettes × 2 themes\n`);
+console.log(`palette contract (decisions/0006) — ${Object.keys(PALETTES).length} palettes × 2 themes, ${CONTRACT.length} checks each\n`);
 for (const r of rows) {
-    if (!r.failed.length) { console.log(`  ${r.id.padEnd(12)} ${r.theme.padEnd(6)} ok`); continue; }
-    console.log(`  ${r.id.padEnd(12)} ${r.theme.padEnd(6)} ${r.failed.join('; ')}`);
+    console.log(`  ${r.id.padEnd(12)} ${r.theme.padEnd(6)} ${r.failed.length ? r.failed.join('; ') : 'ok'}`);
 }
 console.log('');
-if (contractFailures) {
-    console.log('worklist (below the contract, to be tuned with the given/mark/error roles):');
-    for (const [role, n] of [...worklist.entries()].sort((a, b) => b[1] - a[1])) {
-        console.log(`  ${String(n).padStart(3)} pair(s)  ${role}`);
-    }
-    console.log('');
-}
-if (enforcedFailures) {
-    console.log(`${enforcedFailures} enforced failure(s): a board that cannot be told apart from the page.`);
-} else if (contractFailures && !STRICT) {
-    console.log(`no enforced failures; ${contractFailures} pair(s) on the worklist (run with --strict to fail on them).`);
-} else if (contractFailures) {
-    console.log(`${contractFailures} pair(s) below the contract (--strict).`);
+if (!failures.length) {
+    console.log(`all ${rows.length * CONTRACT.length} checks pass: every role is visible in every style.`);
 } else {
-    console.log(`all ${rows.length} palette/theme pairs meet the contract.`);
+    const byRole = new Map();
+    for (const f of failures) byRole.set(f.role, (byRole.get(f.role) || 0) + 1);
+    console.log(`${failures.length} failure(s) — a colour a player cannot see:`);
+    for (const [role, n] of [...byRole.entries()].sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(3)} pair(s)  ${role}`);
 }
-process.exit(enforcedFailures || (STRICT && contractFailures) ? 1 : 0);
-
+process.exit(failures.length && !REPORT_ONLY ? 1 : 0);

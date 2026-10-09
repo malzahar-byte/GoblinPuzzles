@@ -1,5 +1,5 @@
 // Skyscrapers's own settings: wraps the shared settings store.
-import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.23logic';
+import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.24logic';
 const KEY = 'gdp-skyscrapers-settings';
 export const SETTINGS_KEY = KEY;
 export const PROGRESS_PREFIX = 'gdp-skyscrapers:';

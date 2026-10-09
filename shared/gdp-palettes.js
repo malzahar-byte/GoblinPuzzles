@@ -119,24 +119,101 @@ const mix = (a, b, t) => [0, 1, 2].map(i => Math.round(a[i] * (1 - t) + b[i] * t
 // Builds a [checkerIndex][state] -> [r,g,b] lookup. `states` lists the extra states in the
 // order a puzzle wants them (state 0 is reserved for "no state", i.e. the plain cell colour).
 // Each entry is {mix: [r,g,b], t: 0..1}.
+//
+// A cell that is not filled must still read as a cell, so each base is lifted away from the board
+// background when the palette's own value is too close to it (forest and sunset were 5 and 8 steps
+// away, which draws an invisible cell — decisions/0006).
 export function buildCellFill(palette, states) {
-    return palette.cells.map(base => [base, ...states.map(s => mix(base, s.mix, s.t))]);
+    const bg = palette.bg || palette.cells[0];
+    return palette.cells.map((base) => {
+        const visible = asApart(base, bg, 10);
+        return [visible, ...states.map((s) => mix(visible, s.mix, s.t))];
+    });
 }
 
-
-// ---- Board chrome: the surface/grid/ink/accent a puzzle's BOARD needs (not its cells). ----
+// ---- Board chrome: every colour a puzzle's BOARD needs (not its cells). ----
+//
+// The palettes were written by agents in passing and several of their values drew things a player
+// could not see. Rather than hand-tuning sixty numbers, every role that must be *visible* is derived
+// here with its floor built in (decisions/0006): the value moves along its own lightness axis, hue
+// untouched, until it clears the floor. `dev-tools/check-palettes.mjs` re-measures all of it, so the
+// guarantee is checked rather than assumed.
 const rgb = (c) => 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
 const luminance = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
-function chromeFrom(p) {
+const srgb = (s) => s.match(/rgb\((\d+),(\d+),(\d+)\)/).slice(1).map(Number);
+const lin = (v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
+const relLum = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+const contrast = (a, b) => { const x = relLum(a), y = relLum(b); const hi = Math.max(x, y), lo = Math.min(x, y); return (hi + 0.05) / (lo + 0.05); };
+const distance = (a, b) => (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) / 3;
+
+// One lightness step (1/255) toward white or black — hue and saturation are preserved by scaling
+// all three channels by the same amount.
+const lighten = (c, step) => c.map(v => Math.min(255, Math.max(0, v + step)));
+function walk(fg, bg, ok, direction) {
+    const step = direction === 'lighter' ? 1 : -1;
+    let c = fg;
+    for (let i = 0; i < 255; i++) {
+        if (ok(c)) return c;
+        const next = lighten(c, step);
+        if (next[0] === c[0] && next[1] === c[1] && next[2] === c[2]) break;   // hit black or white
+        c = next;
+    }
+    return c;
+}
+// WCAG floors: 4.5 for text on the board, 3 for a graphic or a large label (1.4.11), 1.6 for the
+// thin grid (a line, not text), 8-12 distance for "these two things must look different".
+const asText = (fg, bg, min) => {
+    if (contrast(fg, bg) >= min) return fg;
+    // Move away from the board: darker if the board is light, lighter if the board is dark.
+    return walk(fg, bg, c => contrast(c, bg) >= min, relLum(bg) > 0.5 ? 'darker' : 'lighter');
+};
+const asApart = (fg, bg, min) => (distance(fg, bg) >= min ? fg : walk(fg, bg, c => distance(c, bg) >= min, relLum(bg) > 0.5 ? 'darker' : 'lighter'));
+const tint = (bg, fg, min) => {
+    // A wash of `fg` over `bg`, just strong enough to read as a different state.
+    for (let t = 0.06; t <= 0.5; t += 0.01) { const c = mix(bg, fg, t); if (distance(c, bg) >= min) return c; }
+    return mix(bg, fg, 0.5);
+};
+const RED = { light: [176, 34, 46], dark: [255, 116, 116] };
+const GREEN = { light: [24, 122, 60], dark: [124, 224, 152] };
+
+function chromeFrom(p, theme) {
     // The board surface is the palette's own board background (`bg`), NOT a cell colour. It used to
     // be `cells[0]`, which made the board nearly invisible in several styles — the owner's "Show
-    // board background does not work in many styles" (2026-10-09). `dev-tools/check-palettes.mjs`
-    // fails the gate if any style's surface comes within 12 steps of the page background.
-    const surface = p.bg || p.cells[0], ink = p.text, node = mix(surface, ink, 0.16), accent = p.confirmedMix;
-    const accentInk = luminance(accent) > 0.6 ? [0, 0, 0] : [255, 255, 255];
-    return { surface: rgb(surface), grid: rgb(p.lineThin), ink: rgb(ink), node: rgb(node), accent: rgb(accent), accentInk: rgb(accentInk), over: rgb(p.excludedColor) };
+    // board background does not work in many styles" (2026-10-09).
+    const surface = p.bg || p.cells[0];
+    const ink = asText(p.text, surface, 4.5);
+    // The accent marker: it must stand off the board AND carry legible ink on top. Move it along its
+    // own lightness away from the board, then pick black or white ink and keep moving until the pair
+    // is legible — candy and neon used to draw 4.21 and 3.21 ink on their accents.
+    const away = relLum(surface) > 0.5 ? 'darker' : 'lighter';
+    const accentInkRaw = away === 'darker' ? [255, 255, 255] : [0, 0, 0];
+    const accent = walk(p.confirmedMix, surface,
+        (c) => contrast(c, surface) >= 3 && contrast(accentInkRaw, c) >= 4.5, away);
+    const accentInk = accentInkRaw;
+    const mark = asText(p.excludedColor, surface, 3);
+    // The pointer highlight must be noticeable against the board; if the palette's is too close, pull
+    // it toward the accent (still the palette's own family, no invented colour).
+    const hoverFlat = srgb(rgb(mix(surface, p.hover.slice(0, 3), (p.hover[3] ?? 255) / 255)));
+    const over = distance(hoverFlat, surface) >= 8 ? hoverFlat : mix(hoverFlat, accent, 0.45);
+    return {
+        surface: rgb(surface),
+        grid: rgb(asText(p.lineThin, surface, 1.6)),          // "Show grid" must show a grid
+        gridThick: rgb(asText(p.lineThick, surface, 3)),      // block separators / the frame
+        ink: rgb(ink),
+        muted: rgb(asText(p.textMuted, surface, 3)),
+        node: rgb(mix(surface, ink, 0.16)),
+        accent: rgb(accent),
+        accentInk: rgb(accentInk),
+        mark: rgb(mark),                                      // x / dot on an excluded cell
+        markCandidate: rgb(asText(mix(surface, ink, 0.55), surface, 3)),   // the "(?)" pencil mark
+        given: rgb(tint(surface, ink, 12)),                   // a pre-filled cell, as a wash
+        error: rgb(asText(RED[theme] || RED.light, surface, 3)),          // breaks a rule
+        satisfied: rgb(asText(GREEN[theme] || GREEN.light, surface, 3)),  // row/column count met
+        over: rgb(over),
+        solved: rgb(asText(p.solvedBg, surface, 1.6))
+    };
 }
 export function resolveChrome(paletteId, theme) {
     const p = PALETTES[paletteId] || PALETTES.classic;
-    return chromeFrom(p.both || p[theme] || p.dark);
+    return chromeFrom(p.both || p[theme] || p.dark, theme === 'dark' ? 'dark' : 'light');
 }

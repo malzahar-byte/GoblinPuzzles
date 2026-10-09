@@ -3,7 +3,7 @@
 //
 // Look follows the same convention as Akari's walls: the sea is drawn in the palette's ink and
 // islands keep the palette's surface, so the board reads correctly in every theme and style.
-import { CELL, ACTION_TYPE, isSolved as ruleSolved } from './nurikabe-logic.js?v=13.0.23logic';
+import { CELL, ACTION_TYPE, isSolved as ruleSolved } from './nurikabe-logic.js?v=13.0.24logic';
 
 const CS = 40, M = 6;
 

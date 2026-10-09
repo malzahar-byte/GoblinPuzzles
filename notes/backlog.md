@@ -375,3 +375,21 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
   `satisfied`): add them, tune every palette to the contract, then flip `check-palettes.mjs` to
   `--strict` so the gate holds it. This is the same job as Phase 1 items 5 and 7. →
   `shared/gdp-palettes.js`, `interfaces/palette-chrome.md`, `decisions/0006`.
+
+## Phase 1 items 5 + 7 (roles half) — landed: the palette contract is enforced (2026-10-09)
+
+- `done` — **Fifteen roles, each with a floor built into `chromeFrom()`.** New: `given` (pre-filled
+  cell wash), `markCandidate` (the `(?)` pencil mark), `error` (a broken rule), `satisfied` (a met
+  row/column count), plus `gridThick`, `muted` and `solved` promoted to first-class roles. `over`
+  (hover) is no longer the excluded/mark colour — the three-way collision in `excludedColor` is gone.
+  `buildCellFill()` now lifts an unfilled cell away from the board too (forest was 5 steps away: an
+  invisible cell).
+- `done` — **The checker enforces all of it:** `dev-tools/check-palettes.mjs` runs 16 checks × 10
+  palettes × 2 themes = 320 measurements, and **all 320 pass** (it failed 8 before the accent-ink and
+  cell-base guarantees). A failing pair now fails the gate, and a new palette is safe by construction.
+  → `shared/gdp-palettes.js`, `dev-tools/check-palettes.mjs`, `interfaces/palette-chrome.md`,
+  `decisions/0006`.
+- `approved` — **Use the new roles in the puzzles** (the other half of items 5/7): draw pre-filled
+  cells with `given` (Futoshiki, Binairo, Skyscrapers, Nurikabe clue numbers, Train Tracks givens),
+  add the `(?)`/`x` mark cycle on right click, and render `error` / `satisfied` from a shared
+  mistake-highlighting toggle that is on by default. → the nine `*-board.js` files.

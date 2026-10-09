@@ -4,7 +4,7 @@
 // A piece joins exactly two sides; the player cycles a cell through the seven states
 // (empty → ─ → │ → ┌ → ┐ → ┘ → └ → empty). Cells the puzzle pre-filled are locked.
 // Row and column counts sit in the margins; a hidden count is simply not drawn.
-import { DIR, PIECES, UNKNOWN, ACTION_TYPE, isSolved as ruleSolved } from './traintracks-logic.js?v=13.0.23logic';
+import { DIR, PIECES, UNKNOWN, ACTION_TYPE, isSolved as ruleSolved } from './traintracks-logic.js?v=13.0.24logic';
 
 const CS = 40, PAD = 6, ML = 30, MT = 30;
 const N = DIR.N, E = DIR.E, S = DIR.S, W = DIR.W;

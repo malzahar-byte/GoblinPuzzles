@@ -379,3 +379,22 @@ Append only; a correction is a new entry, never an edit.
   prints as a worklist and flips to `--strict` when the tuning pass lands with those new roles — the
   same job as Phase 1 items 5/7. RAN: `node dev-tools/check-palettes.mjs` → no enforced failures, 37 on
   the worklist.
+
+## 2026-10-09 — Cloud_Cline_1 — palette roles + the tuning pass: 320/320 contract checks pass
+
+- **The roles exist now, with their floors built into the code.** `chromeFrom()` derives fifteen roles
+  and moves any that is too faint along its own lightness (hue untouched) until it clears its floor:
+  `ink` 4.5:1, `muted` 3:1, `grid` 1.6:1, `gridThick` 3:1, `accent` 3:1 with its own ink 4.5:1 on it,
+  `mark`/`markCandidate`/`error`/`satisfied` 3:1, `given` and board-vs-page 12 distance, `hover` 8,
+  and `buildCellFill()` lifts an unfilled cell 10 away from the board. New roles the puzzle work needs:
+  `given`, `markCandidate`, `error`, `satisfied`; and the `excludedColor` collision is gone — the hover
+  highlight is its own derived colour rather than the mark/error colour.
+- **Measured before, measured after.** The first contract run reported 37 of 200 pairs below a usable
+  contrast; after the tuning pass the checker measures 320 pairs and **all 320 pass**. The two
+  remaining structural failures it found on the way — candy/neon accent ink (4.21 and 3.21 on their
+  accents) and forest/sunset unfilled cells (5 and 8 from the board) — are fixed where they belong: the
+  accent now walks until its own ink is legible, and the cell base is lifted in `buildCellFill()`.
+- **The checker is a gate row** (`dev-tools/check-palettes.mjs`, 14 jobs). RAN: `node dev-tools/check-all.mjs`
+  → **14 pass, 0 fail, 0 unrun**; `node dev-tools/check-palettes.mjs` → all 320 checks pass.
+- Not verified by eye: the tuned values change how every style looks (that is the point). The numbers
+  are in the checker output; the owner reviews the colours, the floors are not negotiable.

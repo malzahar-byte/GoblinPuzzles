@@ -37,13 +37,26 @@ player either sees the grid or does not.
 | `lineThick` | block separators, the frame | ratio ≥ 3 |
 | `confirmedMix` → **accent** | a filled marker (lamp, sea, node, tower) | ratio ≥ 4.5 |
 | `accentInk` | anything drawn on top of an accent | ratio ≥ 4.5 on accent |
-| `excludedColor` | x / dot marks on an excluded cell | ratio ≥ 4.5 |
+| `excludedColor` → **mark** | x / dot marks on an excluded cell | ratio ≥ 3 |
 | `hover` | pointer highlight | ≥ 8 distance, composited over the surface |
 | **`given`** (new) | a pre-filled cell, as a background wash | ≥ 10 distance from surface, and distinguishable from an accent marker |
-| **`markCandidate`** (new) | the `(?)` pencil mark | ratio ≥ 4.5, and distinct from `given` |
-| **`error`** (new) | a cell/line that breaks a rule (mistake highlighting) | ratio ≥ 4.5 |
+| **`markCandidate`** (new) | the `(?)` pencil mark | ratio ≥ 3, and distinct from `given` |
+| **`error`** (new) | a cell/line that breaks a rule (mistake highlighting) | ratio ≥ 3 |
 | **`satisfied`** (new) | a row/column count that is met (green in the owner's reference) | ratio ≥ 3 |
 | `solvedBg` | the solved background | ratio ≥ 1.6 against the page |
+
+
+**Floors, as implemented:** text drawn on the board needs **4.5:1** (WCAG 1.4.3); a graphic or a large
+label needs **3:1** (WCAG 1.4.11) — that is the accent, the marks, `error` and `satisfied`; the thin
+grid needs **1.6:1** because it is a line and not text; and things that only have to look *different*
+use a distance floor — 12 for board-vs-page and given-vs-board, 10 for an unfilled cell, 8 for the
+hover highlight. The earlier draft of this note asked 4.5:1 of the graphics too; the WCAG split is the
+right one and the checker now measures 16 pairs per palette.
+
+**Where the guarantee lives:** `chromeFrom()` in `shared/gdp-palettes.js` moves a role along its own
+lightness (hue untouched) until it clears its floor, and `buildCellFill()` does the same for an
+unfilled cell. So the contract is enforced *by construction* and re-measured by the checker — a new
+palette cannot introduce an invisible colour, and a hand-edited value that fails is a build failure.
 
 ## Consequences for the work in flight
 
