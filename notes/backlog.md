@@ -166,52 +166,96 @@ adapter, unique generator, BitSeq codec, shared secret lock):
   (not a verbatim note); agent tests must be few, easy, deterministic and fail only for a real
   defect — hard, slow or browser checks go to the owner's runner.
 
-## Owner bug report (2026-10-09) — triaged by Cloud_Cline_1, read-only, nothing fixed yet
+## Owner direction (2026-10-09, second round) — triaged by Cloud_Cline_1
 
-Evidence for each line is the owner's report plus code reading; the root causes are in the
-2026-10-09 `history.md` entry. Do not start any of these without the owner's go-ahead (R3), and the
-two `shared/` ones need approval first (R6/R8).
+Statuses now follow the owner's answers: `approved` = the owner has told us to do it, `blocked` =
+explicitly deferred, `proposed` = still a suggestion. Root causes and evidence are in the
+2026-10-09 `history.md` entries. Do not start a `proposed` line.
 
-- `proposed` — **Board surface is nearly invisible in several styles.** There are two different
-  board backgrounds: Pictogram/Nonogram draw `palette.bg` (`js/nonogram-board.js`), while the other
-  eight draw `resolveChrome().surface`, which `chromeFrom()` builds from `p.cells[0]` — a *cell*
-  colour, not the palette's `bg`. Light-theme Paper/Mono/Ocean/Candy land within a few RGB points of
-  `--gdp-bg` (dark theme: Neon), so "Show board background" shows nothing and the toggle looks
-  dead. → `interfaces/palette-chrome.md`.
-- `proposed` — **Nurikabe's first click looks like nothing happened.** An island is drawn as "no
-  fill" — the board surface — so with the surface invisible nothing appears until the second click
-  paints sea. Same root cause as the line above: give islands a drawn state of their own. →
-  `PuzzleForge/Nurikabe/js/nurikabe-board.js`.
-- `proposed` — **Futoshiki test size.** `test-futoshiki.mjs` hardcodes `N = 5`; the creator's range
-  is 4–7 (`creator.html` clamps to it; `state.md` said 4–8 until this triage and was corrected), so
-  the smallest supported size (4×4) should be covered as well. →
-  `PuzzleForge/Futoshiki/dev-tools/test-futoshiki.mjs`.
-- `proposed` — **Train Tracks hides too many clues to look like a puzzle.** The Forge 6×6 example
-  has every row count hidden, one visible column count and 5 pre-filled cells; it is unique but
-  near-empty. Give the generator a floor (a visible count per row/column, or a minimum count). →
-  `PuzzleForge/TrainTracks/js/traintracks-logic.js`.
-- `proposed` — **Pre-filled cells are not visually distinct.** Futoshiki, Binairo, Skyscrapers,
-  Nurikabe clue numbers and Train Tracks givens are drawn with the same `ink` as player values.
-  Wants a per-style "given" tint. → `interfaces/palette-chrome.md` (new key).
-- `proposed` — **Pencil marks and a right-click cycle.** Futoshiki/Binairo/Skyscrapers right-click
-  only clears (on an empty cell it does nothing) and Nurikabe cycles unknown → island → sea; the
-  owner wants a greyed `(?)` mark track, and `x` for "no track here" in Train Tracks, on both
-  buttons. A per-puzzle cell state, not a shell change. → the four `*-board.js` files.
-- `proposed` — **Test-Mode order ≠ puzzle order** in `PuzzleForge/index.html`: the grid lists
-  Nurikabe before Skyscrapers, `TEST_LINKS` puts it after Futoshiki. → `PuzzleForge/index.html`.
-- `proposed` — **The Forge's "Play" boxes open each puzzle's `creator.html`,** not its player, while
-  the tag reads "Play" — decide whether the player should be the target or the label should say
-  "Create" (this is also why a player page's "Create your own puzzle" feels like a round trip). →
-  `PuzzleForge/index.html`.
-- `proposed` — **`click-solve.mjs` keeps its own copy of the nine Test-Mode links,** so a
-  regenerated Forge link silently desyncs the Browser job. Read them from one home (see the "single
-  puzzle registry" item above). → `dev-tools/browser-checks/click-solve.mjs`.
-- `proposed` — **Runner opens Edge, and a long tab-away stops the server.** `findChrome()` only
-  looks in the standard Chrome install spots (then Edge), and the page's 5 s heartbeat is throttled
-  to ~1/min once the tab has been hidden for minutes — past the 20 s idle grace. →
+### Standing directive — one style system for all nine puzzles
+
+- `approved` — **Fix the board surface colour; styles are global.** The owner's repeated position is
+  that board background, grid, ink, pre-filled tint and marks are shared, not per-puzzle. Surface is
+  the visible symptom: Pictogram/Nonogram draw `palette.bg`, the other eight draw `chromeFrom()`'s
+  `surface`, which is built from `p.cells[0]` (a *cell* colour) and is near-invisible in light
+  Paper/Mono/Ocean/Candy and in dark Neon. Use one definition (the palette's `bg`) so the board
+  background is visible on every puzzle in every style. Shared change, owner-approved. →
+  `interfaces/palette-chrome.md`.
+- `approved` — **Pre-filled cells are visually distinct from player values** on every puzzle
+  (Futoshiki, Binairo, Skyscrapers, Nurikabe clue numbers and Train Tracks givens all share `ink`
+  today): a per-style "given" colour in the shared palette/chrome. → `interfaces/palette-chrome.md`.
+- `approved` — **Marks on cells, in one shared shape:** a greyed `(?)`-style candidate mark and an
+  `x`-style "nothing here" mark, reached by left/right click as each puzzle's own cycle defines —
+  the owner's "new thing for them". Proposal: keep it inside each `*-board.js` (no shell change)
+  unless the owner wants it in the shell. → `interfaces/board-adapter.md` (note only).
+
+### Generators must make puzzles for humans, not merely unique puzzles
+
+- `approved` — **Train Tracks always shows every row and column count.** The generator currently
+  hides any count it can (the Forge 6×6 has `rowClue` all -1 and one visible `2`), and the player
+  page documents the policy ("A count that is not shown is a count you get for free"). In every
+  standard Tracks implementation the row/column numbers are the clues and all of them are printed.
+  Drop the hiding policy and that rules sentence, keep uniqueness, and give the Forge example a real
+  clue set. → `PuzzleForge/TrainTracks/`.
+- `approved` — **Futoshiki targets a clue density, not a minimal clue set.** The dedupe pass deletes
+  every inequality sign that uniqueness does not need, leaving 5 givens + 3 signs on a 5×5. Standard
+  Futoshiki shows signs between *some* pairs (plus optionally a few given digits), but published
+  puzzles are much denser and are solved by deduction. Pick a density, then re-check uniqueness. →
+  `PuzzleForge/Futoshiki/`.
+- `approved` — **Human-solvable is a generator requirement.** The owner, 2026-10-09: "being
+  technically solvable mathematically and being designed and solvable for humans are different
+  things". A deduction-only check (no guessing, no brute force) should gate the generator, the way
+  Binairo already rejects boards a human cannot start. One puzzle at a time. →
+  `PuzzleForge/*/js/*-logic.js`.
+- `blocked` — **Pictogram `test-image.mjs` `photo`-preset failure** (owner's Full run, build
+  `13.0.11logic`): the owner says ignore it until Pictogram is the puzzle being worked on. Not a
+  blocker for anything else. → `testing.md`.
+
+### Small UI corrections (all approved)
+
+- `approved` — **"Create your own puzzle" always targets the Forge** (`../index.html`) — the owner
+  confirms that was always the intent. Nurikabe and Train Tracks currently open their own
+  `creator.html`. Check all nine player pages. → the player pages.
+- `approved` — **Test Mode alphabetical, with greyed-out placeholders** for the puzzles not built
+  yet (Slitherlink, Crossword, Chained mode, …) so the order cannot drift as puzzles land; the
+  puzzle grid and the test grid use the same order. → `PuzzleForge/index.html`.
+- `approved` — **Futoshiki tests cover the smallest supported size too** (4×4; `test-futoshiki.mjs`
+  hardcodes `N = 5`, the creator's range is 4–7). → `PuzzleForge/Futoshiki/dev-tools/`.
+- `approved` — **Keep adding the newest hard checks to the owner's runner** in the same shape as
+  `click-solve.mjs` and the Browser job (owner: "continue adding new tests up to date for me to run
+  like that"). A new puzzle's checks land in `JOBS` in `dev-tools/local-runner.mjs`. →
+  `notes/testing.md`.
+
+### The owner's local runner — approved, with the concrete fix
+
+- `approved` — **The runner must not die when the tab is in the background.** Cause: the injected
+  heartbeat pings every 5 s, but Chrome throttles a tab hidden for minutes to about one ping a
+  minute — past the 20 s idle grace — so the server shuts itself down. Fix: do not read "no ping" as
+  "browser closed". Have the page report visibility (`visibilitychange` / `pagehide` beacons), keep
+  the idle timer suspended while it is hidden, and keep a long grace as a backstop. Also print
+  plainly which browser was found, so an Edge fallback is never a surprise. →
   `dev-tools/local-runner.mjs`.
-- `proposed` — **Gate progress.** `check-all.mjs` prints nothing until the final table; a `k/n`
-  line per job (and the current test name) is wanted. → `dev-tools/check-all.mjs`.
-- `proposed` — **Pictogram `test-image.mjs` fails one `photo`-preset case** (owner's Full run, build
-  `13.0.11logic`). One investigation run, not a blind fix. → `testing.md`.
+- `approved` — **Gate progress output:** `check-all.mjs` prints nothing until its final table; add a
+  `[k/n] <test>` line per job so the owner can watch it move. → `dev-tools/check-all.mjs`.
+- `proposed` — **`click-solve.mjs` keeps its own copy of the nine Test-Mode links,** so a
+  regenerated Forge link silently desyncs the Browser job; read them from one home. →
+  `dev-tools/browser-checks/click-solve.mjs`.
 
+### Research steps the owner set (not started)
+
+- `proposed` — **Pictogram/Nonogram: why is that pair separate?** Own codec and own renderer while
+  the other nine share one — the owner wants it researched before anything changes ("still weird to
+  me and needs to be researched", later step, not now). → `PuzzleForge/Pictogram/`, `Nonogram/`.
+- `approved` — **Migrate Hashi to the common shape:** message+size seed determinism, the shared
+  secret lock, shared chrome, and the standard player page instead of `play.html` with its own
+  `package.json` and hand-rolled plain-text XOR. → `PuzzleForge/Hashi/`.
+- `approved` — **Docs save points reach `main`.** The owner: work that is only documentation "needed
+  to be pushed to git main, so next agent could see and pick up your work". Whether R15 needs a
+  sentence saying so is a question for the owner. → `AGENTS.md`.
+
+### Refuted / no action
+
+- Nurikabe's Forge example has 13 clues and exactly one solution (search limit 3 → 1), and the
+  sparse Futoshiki example is unique too — the "wrong / multiple solutions" feeling is the invisible
+  board surface (`approved` above), not a solver defect. If the owner still hits a board that really
+  admits two solutions, the link is the evidence needed.

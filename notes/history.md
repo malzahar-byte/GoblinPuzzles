@@ -205,3 +205,33 @@ Append only; a correction is a new entry, never an edit.
   `palette.bg`, while the other eight puzzles use `resolveChrome().surface`, which `chromeFrom()`
   builds from `p.cells[0]`. The conclusion is unchanged (that surface is a cell colour, so it is
   near-invisible in several styles), and `backlog.md` was corrected in place in the same commit.
+
+## 2026-10-09 — Cloud_Cline_1 — owner answers, round 2: directives recorded; notes on `main`
+
+- **Owner directive: documentation save points must reach `main`,** not sit on a branch — the next
+  agent has to be able to pick the notes up if this session breaks. The four triage commits were
+  fast-forwarded from `cline/nk93c2s0` into `main` this round, and docs go to `main` from now on.
+  (R15 already says push after every commit; whether `AGENTS.md` needs a sentence saying "docs-only
+  commit → `main`" is a question for the owner.)
+- The owner's answers are recorded as `approved` / `blocked` / `proposed` lines in `backlog.md`, new
+  section "Owner direction (2026-10-09, second round)": styles are global (surface colour, a
+  pre-filled "given" tint, and cell marks all belong to the shared layer); **Train Tracks must always
+  show every row and column count** — the hide-a-clue policy is a defect, not a difficulty setting;
+  **Futoshiki must target a clue density**, not a minimal clue set; **a generator's real bar is
+  human-solvability** ("technically solvable mathematically and being designed and solvable for
+  humans are different things"); "Create your own puzzle" always targets the Forge; Test Mode goes
+  alphabetical with greyed placeholders so the order cannot drift; Hashi is to be migrated to the
+  common shape (seed determinism, shared secret lock, shared chrome, standard page).
+- Deferred by the owner: the Pictogram `test-image.mjs` `photo` failure waits until Pictogram is the
+  puzzle being worked on, and the Pictogram/Nonogram codec-and-renderer divergence is to be
+  *researched* in its own later step, not changed now.
+- Standard rules were read rather than guessed, because the owner asked why this keeps getting lost:
+  Simon Tatham's **Tracks** prints every row and column clue and offers right-click "no track here"
+  marks plus a "this square has track" indicator; **Futoshiki** (Wikipedia) is a Latin square with
+  inequality signs "between some of the squares" and optional given digits; **Nurikabe's** rules and
+  its expectation of a unique solution match the page's own text. Conclusion recorded: uniqueness is
+  necessary but not sufficient, and no generator currently checks human-solvability.
+- The owner offered reference sites/implementations. Answer: not needed for the rules themselves;
+  worth having for the *look* (which sides carry the Train Tracks counts, whether the loop variant
+  has A/B endpoints) and for Futoshiki clue density — and worth asking whether any earlier round's
+  generator research still exists somewhere, since this sandbox is a shallow clone and cannot see it.
