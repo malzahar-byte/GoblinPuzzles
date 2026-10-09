@@ -235,3 +235,34 @@ Append only; a correction is a new entry, never an edit.
   worth having for the *look* (which sides carry the Train Tracks counts, whether the loop variant
   has A/B endpoints) and for Futoshiki clue density — and worth asking whether any earlier round's
   generator research still exists somewhere, since this sandbox is a shallow clone and cannot see it.
+
+## 2026-10-09 — Cloud_Cline_1 — owner answers, round 3: Nurikabe board verified, rules recorded
+
+- **The owner's Nurikabe board is genuinely wrong, and the app was right to stay unsolved.** Evidence
+  (read-only, the puzzle's own rule check): the 5×5 link `MSEoZ6zd7wlxHIoIiwg0ofu` has exactly one
+  solution and the generator's solution grows both "2" islands downward into row 3 —
+  `I S I S I / S S S S S / S I S I S / S I S I S / S S S S S`. The owner's board leaves row 3 all
+  sea, so the two "2" islands are one cell each (size rule) and rows 3–4 make 2×2 sea blocks
+  (no-2×2 rule). **The real defect is the missing feedback:** a filled board that breaks a rule
+  never says *which* rule it breaks, so it reads as a broken app instead of a wrong answer.
+- **The owner's reference points** are recorded in the new
+  `decisions/0005-puzzle-rules-and-clue-policy.md`: `puzzlemadness.co.uk/traintracks` for the Train
+  Tracks look (closed loop, every row/column count shown) and `futoshiki.com` for Futoshiki
+  **difficulty tiers (Trivial / Easy / Tricky / Extreme)** — the owner likes that method, so clue
+  density is a per-difficulty target, never a minimal set.
+- **Rule changes the owner approved this round:** R15 now says notes/documentation commits go to
+  `main`, not a side branch (a local-only doc is not a save point for the next session); R12 now says
+  a puzzle's standard rules, clue policy, difficulty and generator approach belong in a `decisions/`
+  note, which is cap-exempt; `README.md` lists `0005`.
+- **New owner directive, the reason this note exists:** each agent runs in its own cloud sandbox and
+  everything it reasons out dies with the session — so *logic* has to be committed, and generator
+  quality has to be measurable on the owner's pc. Concrete shape: a Generator-QA job in
+  `dev-tools/local-runner.mjs` that sweeps puzzles/sizes, prints clue density, deduction-solvability
+  and timing, and writes it into `TEST-RESULTS.md`.
+- **Runner:** drop the Chrome preference entirely — the owner's Edge opens every tab as its own
+  window, so the runner should simply keep running until the Edge window is closed, and never treat
+  a backgrounded/alt-tabbed tab as "browser gone".
+- **Answer to the owner's doc question:** the notes went only into `notes/` — three files
+  (`history.md`, `backlog.md`, `state.md`) plus this round's `AGENTS.md`, `README.md` and
+  `decisions/0005`. Everything else in those commits is the R7 version step re-pointing `?v=`
+  strings, which is why the diffs look like they touch 41 unrelated files.

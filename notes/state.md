@@ -56,12 +56,18 @@ The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser check
   Nonogram gained the "Show grid" toggle (it hides the thin cell lines; the 5-cell lines and the
   frame stay) and a `grid: true` default; Hashi's background toggle moved from the odd
   `board: 'panel'|'none'` key to the standard `surface` flag.
-- **Owner bug report (2026-10-09)** — the owner's 14-point report was triaged read-only by
-  Cloud_Cline_1 and filed one line each in `backlog.md` ("Owner bug report (2026-10-09)"). Nothing
-  is fixed yet. Two of the items (the board surface colour and a "given" cell tint) are `shared/`
-  changes and need the owner's approval first (R6/R8). Two of the owner's suspicions are refuted:
-  Nurikabe's Forge example has exactly one solution (13 clues), and the sparse Futoshiki example is
-  unique too — both read as "wrong" mainly because the board surface is invisible.
+- **Owner bug report + answers (2026-10-09, triaged read-only by Cloud_Cline_1)** — the owner's 14
+  points and his replies are recorded in `backlog.md` ("Owner bug report (2026-10-09)" and the
+  "Owner direction" sections after it), and everything they settled as design is in
+  `decisions/0005-puzzle-rules-and-clue-policy.md`. Nothing is fixed yet. Owner-approved and
+  waiting: one shared board background, a pre-filled "given" tint and mark colours; Train Tracks
+  shows every row and column count; Futoshiki targets difficulty tiers instead of minimal clues;
+  "Create your own puzzle" always goes to the Forge; Test Mode alphabetical with greyed
+  placeholders; Hashi migrated to the common shape; the runner keeps running until Edge closes and
+  gains a Generator-QA job. Deferred: the Pictogram `test-image.mjs` `photo` failure and the
+  Pictogram/Nonogram divergence research. Refuted: Nurikabe's Forge example is unique (13 clues); the
+  owner's own 5×5 board really does break two rules, but the page should have said which — that
+  feedback gap is an approved fix.
 
 
 ## shared/ — generic layer, reused by every puzzle
@@ -163,7 +169,8 @@ settings/progress, secret lock, asset versioning.
   (like nonogram hint lines) and its generator no longer ships a puzzle below a given-count floor;
   Binairo's rules text now states the no-three-in-a-row ban and the generator rejects boards a human
   cannot start; Futoshiki's generator drops signs while the solution stays unique, so a board no
-  longer shows a sign on every edge.
+  longer shows a sign on every edge. **(Owner, 2026-10-09: that over-corrected — a clue set must
+  target a density/difficulty tier, not the minimum; see `decisions/0005`.)**
 - **Link is message-seeded v2 (2026-10-09, all three):** `encodeFromMessage`, seeds only in the
   link, v1 decoders deleted; Futoshiki's dedupe pass is capped by a solve count, not wall-clock
   time, so a seed always rebuilds the same board. Forge examples: Skyscrapers 4×4 "Nice work!",

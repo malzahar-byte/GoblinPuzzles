@@ -1,8 +1,8 @@
 // Skyscrapers logic. No DOM. Latin square 1..N; edge visibility clues (0 = no clue); optional
 // givens. Player grid: 0 = empty, 1..N = tower height.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.16logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.16logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.16logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.17logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.17logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.17logic';
 
 export const ACTION_TYPE = { CELL: 0, LINE: 1 }; // LINE = a row/column tick (not part of the solution)
 export const MAXN = 15; // 4-bit values

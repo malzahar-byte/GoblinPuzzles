@@ -47,6 +47,7 @@ Nothing else here is required reading. If a document isn't named for your task, 
   - `0002-puzzle-folder-layout.md` — every puzzle lives under `PuzzleForge/`.
   - `0003-shared-board-chrome.md` — board colours come from the shared palettes.
   - `0004-forge-test-mode.md` — Test Mode lists fixed example links.
+  - `0005-puzzle-rules-and-clue-policy.md` — per-puzzle rules, global styles, clue policy.
 - `archive/` — retired documents and previous generations, including `gen-11/`. Never required
   reading.
 

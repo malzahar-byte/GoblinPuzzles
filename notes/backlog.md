@@ -259,3 +259,33 @@ explicitly deferred, `proposed` = still a suggestion. Root causes and evidence a
   sparse Futoshiki example is unique too — the "wrong / multiple solutions" feeling is the invisible
   board surface (`approved` above), not a solver defect. If the owner still hits a board that really
   admits two solutions, the link is the evidence needed.
+
+## Owner direction (2026-10-09, third round) — answers to the report
+
+Logic, standard rules and clue policy now live in `decisions/0005-puzzle-rules-and-clue-policy.md`;
+read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
+
+- `approved` — **A filled-but-wrong board must say which rule it breaks.** Evidence: the owner's 5×5
+  Nurikabe (`MSEoZ6zd7wlxHIoIiwg0ofu`) is correctly not solved — the two "2" islands are one cell
+  and rows 3–4 form 2×2 sea blocks — but the page gives no reason, so it reads as a bug. Show the
+  violated rule (highlight the offending region), at least when every cell is filled. →
+  `PuzzleForge/Nurikabe/` then the other puzzles.
+- `approved` — **A Generator-QA job in the owner's runner.** The owner's point: every agent is a
+  fresh cloud sandbox, so generator research and sweeps die with the session — they must be
+  committed and runnable from `Run-Local.cmd`. Sweep each puzzle/size, print clue density,
+  deduction-only solvability and timing, and write it into `TEST-RESULTS.md`. →
+  `dev-tools/local-runner.mjs`, `notes/testing.md`.
+- `approved` — **Futoshiki difficulty tiers (Trivial / Easy / Tricky / Extreme)** the way
+  `futoshiki.com` does it: clue density is a per-tier target, not "the fewest clues that stay
+  unique". → `PuzzleForge/Futoshiki/`, `decisions/0005`.
+- `approved` — **Train Tracks shows every row and column count** (owner: "I always saw all rows and
+  columns state in number how many tracks there are"; reference `puzzlemadness.co.uk/traintracks`).
+  → `decisions/0005`, `PuzzleForge/TrainTracks/`.
+- `approved` — **Runner tracks Edge only.** The owner's Edge opens each tab as its own window; stop
+  preferring Chrome, stop treating a backgrounded tab as "browser closed", and keep the server
+  running until the Edge window is closed. → `dev-tools/local-runner.mjs`.
+- `proposed` — **Train Tracks A/B endpoints** as an option (the family has both a closed loop and an
+  A→B path); open question in `decisions/0005`.
+- `done` — **Rules updated:** R15 now sends notes/documentation commits to `main`; R12 names
+  `decisions/` as the home for a puzzle's rules, clue policy, difficulty and generator approach;
+  `README.md` lists `decisions/0005`.

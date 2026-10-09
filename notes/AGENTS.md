@@ -94,7 +94,10 @@ reversible details (cell sizes, wording, colours).
 `history.md`. Fix the loser in the same task, or file one backlog line.
 
 **R12 — At most 7 top-level `.md` files in `notes/`.** `decisions/`, `interfaces/`, `tracks/` and
-`archive/` are exempt. Adding a top-level document means merging, retiring, or asking the owner.
+`archive/` are exempt, so recording logic there never raises this question. A puzzle's standard
+rules, clue policy, difficulty and generator approach belong in a `decisions/` note
+(`decisions/0005-puzzle-rules-and-clue-policy.md`). Adding a top-level document means merging,
+retiring, or asking the owner.
 
 **R13 — Report capability per session, confirmed by trying once.** Never assume it from an agent's
 name or family. "I could not do X" is only allowed after you tried X once and say what happened.
@@ -112,6 +115,9 @@ name or family. "I could not do X" is only allowed after you tried X once and sa
   through the authenticated remote tool (`cloud_git push`), not a plain local `git push`.
   **A commit is not a save point until it is on the remote.** Cloud sessions are rebuilt from
   GitHub; a local-only commit is lost with the sandbox. Save points must never live on one machine.
+  **Notes and documentation commits go to `main`, not to a side branch** — the next session has to
+  be able to read the record even if this one ends mid-task (owner, 2026-10-09). Code changes may be
+  prepared on a branch and fast-forwarded into `main` in the same session.
 - **Long jobs leave save points in flight, not only at the end.** The moment a new piece of work
   exists and parses — a logic module before its board, a generator before its player — commit and
   push it; a `WIP:` prefix is fine (`git commit -m "WIP TrainTracks: logic module, solver mid-debug"`).
