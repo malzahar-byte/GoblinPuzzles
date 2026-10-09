@@ -350,3 +350,12 @@ Append only; a correction is a new entry, never an edit.
   background becomes visible in the light styles too.
 - Not verified by eye: this is a colour change on every player page, and the browser look belongs to
   the owner's run (R17). The tuned values are listed in the QA output and are easy to veto.
+
+## 2026-10-09 — Cloud_Cline_1 — correction (R9) to the palette numbers above
+
+- The entry above says the old board-surface source failed "6 of 20 palette/theme pairs" and then
+  lists eight. The accurate pair counts: with `cells[0]` as the surface **six** pairs were within 12
+  steps (paper 8, ocean 6, contrast 11, candy 5, mono 4 in light; neon 3 in dark); switching the
+  surface to `bg` left a *different* six too close (classic-dark 8, forest-dark 5, candy-light 7,
+  mono-light 9, neon-dark 10, contrast-light 11), and seven `bg` values were tuned so that all
+  twenty pass. `backlog.md` was corrected in place in the same commit.

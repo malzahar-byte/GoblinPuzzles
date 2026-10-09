@@ -348,9 +348,10 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
 
 - `done` — **Board surface comes from the palette's `bg`, and a check keeps it visible.**
   `chromeFrom()` used `p.cells[0]` (a *cell* colour) as the board surface, so the board was drawn in
-  something indistinguishable from the page in several styles. Measured before the fix: **6 of 20
-  palette/theme pairs within 12 RGB steps of `--gdp-bg`** — paper (8), ocean (6), contrast (11),
-  candy (5), mono (4) in light; neon (3), classic (8) and forest (5) in dark. `surface` now comes from
+  something indistinguishable from the page in several styles. Measured: with the old
+  source **6 of 20 palette/theme pairs were within 12 RGB steps of `--gdp-bg`** (paper 8, ocean 6,
+  contrast 11, candy 5, mono 4 in light; neon 3 in dark); moving to `bg` left a different six
+  (classic-dark 8, forest-dark 5, candy-light 7, mono-light 9, neon-dark 10, contrast-light 11). `surface` now comes from
   the palette's `bg`, and seven `bg` values were tuned so **all 20 pairs pass**.
   `dev-tools/check-palettes.mjs` is in the gate, so a new palette that draws no board fails the build.
   → `shared/gdp-palettes.js`, `dev-tools/check-palettes.mjs`, `dev-tools/check-all.mjs`,
