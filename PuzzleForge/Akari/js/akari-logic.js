@@ -8,9 +8,9 @@
 //
 // Rules: every white cell must be lit; no two lamps may see each other (same row/col, no wall
 // between); every numbered wall must have exactly that many adjacent lamps.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.3logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.3logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.3logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.4logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.4logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.4logic';
 
 export const CELL = { EMPTY: 0, LAMP: 1, MARK: 2 };
 export const ACTION_TYPE = { CELL: 0 };

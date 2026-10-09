@@ -4,7 +4,7 @@
 // One extra move over the other grid puzzles: clicking a row/column number (a clue in the
 // margin) ticks that whole line as done, the same way a nonogram hint is struck through. The
 // ticks are cosmetic — they never affect the solved check — and they are saved with progress.
-import { ACTION_TYPE, isSolved as ruleSolved } from './skyscrapers-logic.js?v=13.0.3logic';
+import { ACTION_TYPE, isSolved as ruleSolved } from './skyscrapers-logic.js?v=13.0.4logic';
 
 const CS = 40, M = 28;
 

@@ -53,7 +53,7 @@ const PLANNERS = {
 // Same links as PuzzleForge/index.html TEST_LINKS (the Test Mode examples the owner keeps there).
 const TESTS = [
     ['Pictogram', '/PuzzleForge/Pictogram/index.html?id=cCM-Fl-sEWICog_V'],
-    ['Hashi', '/PuzzleForge/Hashi/play.html?id=-Xrybal-KMq-okrX60hypwGl'],
+    ['Hashi', '/PuzzleForge/Hashi/play.html?id=ESkk7NPoZhkBXKuUkw69ATy'],
     ['Akari', '/PuzzleForge/Akari/index.html?id=-KlsFRx2FhkpF-pIiw-1o_8'],
     ['Skyscrapers', '/PuzzleForge/Skyscrapers/index.html?id=_GkduhIEGcUqE-d-sFF-j-Ehwh--aeaUka-fyxo'],
     ['Binairo', '/PuzzleForge/Binairo/index.html?id=IeqUb-UsJEgNoQQGcb_XI-Eskk-c'],

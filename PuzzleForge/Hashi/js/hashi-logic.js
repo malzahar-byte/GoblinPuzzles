@@ -1,5 +1,6 @@
 // Hashi (Hashiwokakero) logic: no DOM. islands = [{r,c,n}] sorted row-major; n = bridges needed (1-8).
-import { BitSeq } from '../../../shared/gdp-bitseq.js';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.4logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.4logic';
 
 // Candidate bridges: each island to its nearest island right and down. `cross` = indexes of edges that would cross it.
 export function findEdges(W, H, islands) {
@@ -82,33 +83,69 @@ export function generate(W, H, rng = Math.random, target = Math.round(W * H / 4)
     return null;
 }
 
-// ---- link ("the link is the save file"): same method as Pictogram, message XOR-locked with the solution ----
+// ---- link ("the link is the save file"): message-seeded, version 2 ----
+//
+// The link stores the seed, never the board: the same message + size always gives the same puzzle
+// and the same link, and parseLink rebuilds the islands from the seed. Only version 2 is read;
+// there is no v1 decoder (invariant 2 — old versions are retired, not kept readable).
 const solutionKey = values => { const k = new BitSeq(); values.forEach(v => k.appendNum(v, 2)); return k; };
 
-export function encodeLink(W, H, islands, message) {
-    const res = solve(W, H, islands, 2);
+export const LINK_VERSION = 2;
+// Fixed generator options, so a seed always rebuilds the exact same board on both sides.
+const SEED_TRIES = 800;
+
+export function seedFromMessage(message) {
+    return hash(Array.from(message).map(charToNum)) & 0x7fffffff;
+}
+
+export function generateFromSeed(W, H, seed) {
+    return generate(W, H, getRandomizer(seed), Math.round(W * H / 4), SEED_TRIES);
+}
+
+// The message hash, advanced until it yields a unique puzzle — deterministic for the same input.
+export function seedForMessage(W, H, message, tries = 4000) {
+    let seed = seedFromMessage(message);
+    for (let i = 0; i < tries; i++) {
+        if (generateFromSeed(W, H, seed)) return seed;
+        seed = (seed + 1) & 0x7fffffff;
+    }
+    return -1;
+}
+
+export function encodeSeededLink(W, H, seed, message) {
+    const p = generateFromSeed(W, H, seed);
+    if (!p) throw new Error('No unique puzzle for this seed');
+    const res = solve(W, H, p.islands, 2);
     if (res.count !== 1 || res.aborted) throw new Error('Puzzle must have exactly one solution');
     const enc = new BitSeq().appendChars(message).getXOR(solutionKey(res.values));
-    const cells = Array(W * H).fill('0'); islands.forEach(s => cells[s.r * W + s.c] = '1');
-    const nums = new BitSeq(); islands.forEach(s => nums.appendNum(s.n - 1, 3));
-    const len = 6 + 3 + 6 + 6 + W * H + nums.length() + 1 + enc.length();
+    const len = 6 + 3 + 6 + 6 + 31 + 1 + enc.length();
     const gap = (6 - len % 6) % 6;
-    const b = new BitSeq().appendNum(0, 6).appendNum(gap, 3).appendNum(0, gap).appendNum(W - 3, 6).appendNum(H - 3, 6);
-    b.append(cells.join('')).append(nums.get()).appendNum(0, 1).append(enc.get()); // 1 bit: message type (0 = plain text)
+    const b = new BitSeq().appendNum(LINK_VERSION - 1, 6).appendNum(gap, 3).appendNum(0, gap)
+        .appendNum(W - 3, 6).appendNum(H - 3, 6)
+        .appendNum(seed, 31).appendNum(0, 1).append(enc.get()); // 1 bit: message type (0 = plain text)
     return b.getShuffled().toAlphas();
+}
+
+// What a creator calls: message (+ size) -> the link, deterministically.
+export function encodeFromMessage(W, H, message) {
+    const seed = seedForMessage(W, H, message);
+    if (seed < 0) throw new Error('Could not seed a unique puzzle for this message at this size');
+    return encodeSeededLink(W, H, seed, message);
 }
 
 export function parseLink(id) {
     const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
     const version = 1 + rd.readNum(6);
-    if (version !== 1) throw new Error('Unknown Hashi link version ' + version);
+    if (version !== LINK_VERSION) throw new Error('Unknown Hashi link version ' + version);
     rd.readNum(rd.readNum(3));
     const W = rd.readNum(6) + 3, H = rd.readNum(6) + 3;
-    const cells = rd.read(W * H), islands = [];
-    for (let i = 0; i < cells.length; i++) if (cells[i] === '1') islands.push({ r: Math.floor(i / W), c: i % W, n: 0 });
-    islands.forEach(s => s.n = rd.readNum(3) + 1);
+    // Seeded link: the islands are rebuilt from the seed, never stored.
+    const seed = rd.readNum(31);
     const msgType = rd.readNum(1);
-    return { version, W, H, islands, msgType, enc: new BitSeq(rd.read()) };
+    const enc = new BitSeq(rd.read());
+    const p = generateFromSeed(W, H, seed);
+    if (!p) throw new Error('Seeded Hashi link does not generate a puzzle');
+    return { version, W, H, islands: p.islands, seed, msgType, enc };
 }
 
 export const decryptMessage = (enc, values) => enc.getXOR(solutionKey(values)).toChars();
