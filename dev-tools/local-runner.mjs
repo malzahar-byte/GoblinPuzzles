@@ -163,6 +163,15 @@ const JOBS = {
         steps: [
             { file: 'dev-tools/browser-checks/click-solve.mjs', args: [], cmdline: 'node dev-tools/browser-checks/click-solve.mjs' }
         ]
+    },
+    generator: {
+        // Quality, not pass/fail: how much each generator gives the player, and whether its
+        // puzzles can be solved by deduction. The owner asked for these numbers to be measurable on
+        // his pc (they used to die with an agent's sandbox).
+        label: 'Generator QA - clue density, uniqueness and human-solvability per puzzle and size',
+        steps: [
+            { file: 'dev-tools/generator-qa.mjs', args: [], cmdline: 'node dev-tools/generator-qa.mjs' }
+        ]
     }
 };
 

@@ -311,3 +311,25 @@ Append only; a correction is a new entry, never an edit.
   on this tree → **13 pass, 0 fail, 0 unrun** (2 slow Pictogram sweeps not run), progress lines shown.
   The runner itself was smoke-tested (`--no-open`, `/__status`, heartbeat injection, both
   `/__ping` states).
+
+## 2026-10-09 — Cloud_Cline_1 — Phase 0 item 2: Generator QA, and its first numbers
+
+- **`dev-tools/generator-qa.mjs` + a "Generator QA" button in the runner.** It sweeps each seeded
+  puzzle and size through the same path a link takes (message → seed → board) and reports: seeds that
+  produced a puzzle, clue density, unique solutions, the deduction-only check where a puzzle has one,
+  and generation time. It is a measurement job, not a gate, and the table lands in
+  `TEST-RESULTS.md` with the build stamp — the owner's point that measurements must survive a session.
+  Verified end to end through the runner: `/__run?job=generator` → PASS (exit 0) → written to
+  `TEST-RESULTS.md`.
+- **First baseline (build `13.0.19logic`, 3 seeds per size; every case unique):**
+  - Train Tracks publishes **3 of 12** row/column counts at 6×6, 4/16 at 8×8, 6/20 at 10×10 — the
+    hide-the-clues defect, in numbers.
+  - Futoshiki gives **5 clues (12%)** at 4×4, 9 (14%) at 5×5, 15 (16%) at 6×6, and its own deduction
+    check passes **1/3 at 4×4, 0/3 at 5×5 and 0/3 at 6×6** — it ships puzzles that need guessing.
+  - Binairo, the one generator with a hand-solvability filter, is **3/3 human** at 6, 8 and 10.
+  - Nurikabe 6×6 gives 7 clue cells (19%); Akari 10×10 takes 2.2 s and Skyscrapers 8×8 3.5 s to
+    generate — the slowest generators are now visible too.
+- **Process lesson recorded in `decisions/0005`:** ask the owner for a reference link before reading
+  the rules. Two rounds went into re-deriving Nurikabe until `puzzle-nurikabe.com` settled it (two
+  states, not three), and Train Tracks' expected look came from his link. A rules text does not carry
+  the interaction model or the expected look.

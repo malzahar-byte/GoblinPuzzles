@@ -44,6 +44,12 @@ closed. Results are
 A new hard check belongs in the runner's jobs (`dev-tools/local-runner.mjs`, `JOBS`), so the owner
 can press a button for it, rather than in the agent's own sandbox loop.
 
+**Generator QA is a runner job too** (`dev-tools/generator-qa.mjs`, the "Generator QA" button): it
+sweeps each seeded puzzle and size and reports clue density, unique-solution count, the deduction-only
+check where a puzzle has one, and generation time, into `TEST-RESULTS.md`. It is not a gate — a
+failure there is a quality finding, not a broken build — and it exists because those numbers used to
+die with an agent's sandbox (owner, 2026-10-09).
+
 ## Kinds of check
 
 1. **Puzzle Node tests** (`PuzzleForge/<Puzzle>/dev-tools/test-*.mjs`) — link encoding, solving,

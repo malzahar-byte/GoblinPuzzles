@@ -224,6 +224,9 @@ from `…/GoblinPuzzles/PuzzleForge/`.
   multi-minute Pictogram sweeps, which are not run by default.
 - `check-integration.mjs` — code wiring: broken relative imports, a settings key defined twice or
   hardcoded outside its `settings.js`, pages not reaching `gdp-settings.js`/`gdp-theme.css`.
+- `generator-qa.mjs` — **Generator QA**: sweeps every seeded puzzle and size and reports clue density,
+  unique solutions, the deduction-only check where the puzzle has one, and generation time. Run from
+  the runner's "Generator QA" button or by hand; the table lands in `TEST-RESULTS.md`. Not a gate.
 - `check-docs.mjs` — the notes contract: required docs, the top-level cap, `interfaces/` and
   `tracks/` present, decision references and local links resolve.
 - `browser-checks/` — `static-server.mjs`, `p5stub.js`, `smoke-player.mjs`, `README.md`, the
@@ -236,7 +239,8 @@ from `…/GoblinPuzzles/PuzzleForge/`.
   + `package.json` + `.gitignore`. Double-clicking it serves the folder on `127.0.0.1`, opens the
   Forge in the owner's **Edge** (Chrome only as a fallback; `CHROMIUM_PATH` overrides), adds a
   "Local tests" section with **Quick** (the gate), **Full** (the gate, then the two slow Pictogram
-  sweeps with no timeout) and **Browser** (all 9 playable puzzles solved by real clicks) buttons, and
+  sweeps with no timeout), **Browser** (all 9 playable puzzles solved by real clicks) and **Generator
+  QA** (clue density / uniqueness / human-solvability per puzzle and size) buttons, and
   writes `TEST-RESULTS.md` at the folder root. Its only dependency is `playwright-core` (no browser
   download). The window closes when the browser window does — **alt-tabbing away is not a close**:
   the page reports its own visibility and a hidden page gets a 15-minute backstop instead of the

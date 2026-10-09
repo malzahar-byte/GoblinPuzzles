@@ -325,3 +325,21 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
   colouring. → `PuzzleForge/Nurikabe/js/nurikabe-board.js`, `decisions/0005`.
 - `done` — the earlier "an unset cell must not look like an island" item is superseded by the
   two-state item above (with two states there is no unset state to show).
+
+## Phase 0 item 2 — landed: Generator QA (2026-10-09, Cloud_Cline_1)
+
+- `done` — **`dev-tools/generator-qa.mjs` + a "Generator QA" button in the runner.** Sweeps every
+  seeded puzzle and size (message → seed → board, the path a link takes) and reports: seeds that
+  produced a puzzle, clue density, unique solution, the deduction-only check where the puzzle has
+  one (`logicSolvable`), and generation time. It is not a gate — it measures quality — and the table
+  lands in `TEST-RESULTS.md` with the build stamp. Verified end to end through the runner
+  (`/__run?job=generator` → PASS → `TEST-RESULTS.md`). → `dev-tools/generator-qa.mjs`,
+  `dev-tools/local-runner.mjs`, `PuzzleForge/index.html`.
+- **First baseline (build `13.0.19logic`, 3 seeds per size, all unique):** Train Tracks publishes
+  **3 of 12** row/column counts at 6×6, 4 of 16 at 8×8, 6 of 20 at 10×10 — the hide-clues defect in
+  numbers. Futoshiki gives **5 clues (12%)** at 4×4, 9 (14%) at 5×5, 15 (16%) at 6×6, and its own
+  deduction check passes **1/3 at 4×4 and 0/3 at 5×5 and 6×6** — it ships puzzles that need guessing.
+  Binairo (the one generator with a hand-solvability filter) is 3/3 human at every size. Nurikabe
+  gives 7 clue cells (19%) at 6×6, Akari 10×10 takes 2.2 s, Skyscrapers 8×8 3.5 s.
+- `approved` — **Fill in the `human` column for the other puzzles** (Akari, Hashi, Skyscrapers,
+  Nurikabe, Train Tracks have no deduction-only check). Binairo's `logicSolvable` is the pattern.

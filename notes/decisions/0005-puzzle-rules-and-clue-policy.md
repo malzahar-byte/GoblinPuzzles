@@ -20,6 +20,13 @@ choice and not a thing to be re-decided:
   are the single source; a board background that is invisible in some styles, or a puzzle that draws
   its own colour source (Pictogram/Nonogram today), is a defect — not a variation.
 
+## Ask the owner for a reference link early (lesson, 2026-10-09)
+
+A rules text is not enough: the *interaction model* and the *expected look* are what get lost between
+sessions, and the owner's reference links supply both in one line. Two rounds were spent re-deriving
+Nurikabe before `puzzle-nurikabe.com` settled it (two states, not three), and Train Tracks' expected
+look came from `puzzlemadness.co.uk/traintracks` (every count shown). Ask first, then read the rules.
+
 ## Per-puzzle rules and expected clue policy
 
 Re-read before touching a generator. "Unique" is the floor, never the bar — the owner's standard is
