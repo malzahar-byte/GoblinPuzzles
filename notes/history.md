@@ -414,3 +414,22 @@ Append only; a correction is a new entry, never an edit.
 - RAN: `node PuzzleForge/Nurikabe/dev-tools/test-nurikabe.mjs` → all ok (8×8: 13 islands, 10×10: 23);
   `node dev-tools/check-all.mjs` → **14 pass, 0 fail, 0 unrun**. The adapter itself is verified by the
   owner's Browser job (an adapter cannot be imported in Node — its logic import carries the `?v=`).
+
+## 2026-10-09 — Cloud_Cline_1 — Train Tracks shows every count (owner's #2/#9)
+
+- **The hide-a-clue policy is gone.** The generator hid any row/column count it could while the
+  solution stayed unique — the Forge 6×6 example ended up with **all six row counts hidden and one
+  visible column count**, which is the owner's "Tracks look bad / rows and columns do not all show
+  their numbers". In this puzzle family the numbers *are* the clues: the generator now publishes every
+  row and column count, and only the pre-filled pieces are optional (dropped one at a time while a
+  limit-2 search still finds exactly one loop).
+- **Measured:** Generator QA on Train Tracks is now **100% of counts visible** at 6×6, 8×8 and 10×10
+  (was 3/12, 4/16, 6/20 last commit), every case unique. New Forge example 6×6 `Well done!` →
+  `-4_p68N_3gRxLacW-yKWWLz` (12/12 counts, 1 pre-filled cell, unique), and the same link was
+  regenerated in `click-solve.mjs`. The rules sentence that justified hiding counts ("a count that is
+  not shown is a count you get for free") is replaced by "every row and column has one", and
+  `test-traintracks.mjs` now asserts `hidden === 0` at every size.
+- RAN: `PuzzleForge/TrainTracks/dev-tools/test-traintracks.mjs` → all ok (4×4/6×6/8×8/10×10, 0 hidden);
+  `node dev-tools/check-all.mjs` → 14 pass, 0 fail, 0 unrun.
+- **Session end state:** the owner ran out of free model usage mid-task; this entry is the handoff.
+  Committed and pushed to `main` so the next session can continue from `backlog.md`.

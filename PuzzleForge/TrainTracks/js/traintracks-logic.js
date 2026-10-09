@@ -8,9 +8,9 @@
 //
 // A piece is a bitmask of the sides it joins: N=1, E=2, S=4, W=8. Legal pieces join exactly two
 // sides, so there are six of them plus the empty cell.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.25logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.25logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.25logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.26logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.26logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.26logic';
 
 export const DIR = { N: 1, E: 2, S: 4, W: 8 };
 // index 0 = empty, 1..6 = the six pieces (NS, EW, NE, NW, SE, SW)
@@ -235,20 +235,21 @@ export function generate(W, H, rng = Math.random, opts = {}) {
         if (!loop) continue;
         const solution = piecesFromLoop(W, H, loop);
         const { rowClue, colClue } = deriveClues(W, H, solution);
-        // Start from every clue visible and every cell pre-filled, then hide/drop one clue at a
-        // time while a limit-2 search still finds exactly one loop.
+        // Every row and column count stays VISIBLE: in this puzzle family the numbers are the clues
+        // (owner, 2026-10-09, with `puzzlemadness.co.uk/traintracks` as the reference — "I always saw
+        // all rows and columns state in number how many tracks are there"). Hiding a count to make the
+        // puzzle harder is what left the Forge example with one visible number and no row clues at all.
+        // Only the pre-filled pieces are optional: drop one at a time while a limit-2 search still
+        // finds exactly one loop.
         const givens = solution.map(p => (p === 0 ? PIECES[0] : p));
         const unique = () => { const res = solve(W, H, rowClue, colClue, givens, 2, opts.maxNodes ?? 60000); return !res.aborted && res.count === 1; };
         if (!unique()) continue;
         const steps = [];
-        for (let r = 0; r < H; r++) steps.push({ kind: 'row', i: r });
-        for (let c = 0; c < W; c++) steps.push({ kind: 'col', i: c });
         for (let i = 0; i < N; i++) steps.push({ kind: 'cell', i });
         for (const s of shuffle(steps, rng)) {
-            if (s.kind === 'row') { const save = rowClue[s.i]; rowClue[s.i] = -1; if (!unique()) rowClue[s.i] = save; }
-            else if (s.kind === 'col') { const save = colClue[s.i]; colClue[s.i] = -1; if (!unique()) colClue[s.i] = save; }
-            else { const save = givens[s.i]; givens[s.i] = UNKNOWN; if (!unique()) givens[s.i] = save; }
+            const save = givens[s.i]; givens[s.i] = UNKNOWN; if (!unique()) givens[s.i] = save;
         }
+
         const res = solve(W, H, rowClue, colClue, givens, 2, 400000);
         if (res.aborted || res.count !== 1) continue;
         return { W, H, rowClue, colClue, givens, solution, attempts: t + 1 };

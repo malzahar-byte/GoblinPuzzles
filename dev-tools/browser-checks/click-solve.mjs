@@ -61,7 +61,7 @@ const TESTS = [
     ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=Ez_F525GqUHwU-gEpo-Vgfn'],
     ['Nonogram', '/PuzzleForge/Nonogram/index.html?id=EkjCQkVo_E1zztIsWQNdH2j2pF'],
     ['Nurikabe', '/PuzzleForge/Nurikabe/index.html?id=glIVkgqnE0N-t8iHGo__a22c3bs'],
-    ['TrainTracks', '/PuzzleForge/TrainTracks/index.html?id=-OMw6O3dR-SBG-ocayc20nz'],
+    ['TrainTracks', '/PuzzleForge/TrainTracks/index.html?id=-4_p68N_3gRxLacW-yKWWLz'],
 ];
 
 const [root, portArg] = [process.argv[2], process.argv[3]];

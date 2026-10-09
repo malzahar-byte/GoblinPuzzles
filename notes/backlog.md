@@ -408,3 +408,32 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
 - `approved` — **Dots and shading for the other puzzles** still to come: the `(?)`/`x` mark cycle on
   right click, the `given` wash behind pre-filled cells, and the shared mistake highlighting
   (`error` / `satisfied`) with its on-by-default settings toggle.
+
+## Handoff (2026-10-09, session ended on the owner's usage limit)
+
+**Landed this session, in order:** runner Edge-first + survives a backgrounded tab (Phase 0.1);
+`dev-tools/generator-qa.mjs` + a Generator QA runner button (Phase 0.2, with the first quality
+baseline); gate progress lines (Phase 0.3); the shared board background rebuilt on the palette `bg`
+(Phase 1.4); the palette role list + contrast floors enforced by `check-palettes.mjs` — 320/320
+a checks pass, `given`/`markCandidate`/`error`/`satisfied` roles exist (Phase 1.5/7 roles half);
+Nurikabe rewritten as **two states** (white default, left click = sea, right click = dot), UNKNOWN
+removed; Train Tracks now shows **every** row/column count (Generator QA 100%).
+
+**Tools that now exist and should be used:** `node dev-tools/check-all.mjs` (14 jobs, gate),
+`node dev-tools/check-palettes.mjs` (palette contract), `node dev-tools/generator-qa.mjs`
+(`--only Name --seeds N`, quality sweep), runner buttons Quick / Full / Browser / **Generator QA**.
+
+**Next, in order (all recorded in detail above):**
+1. Use the new roles in the puzzles — `given` wash on pre-filled cells, `(?)`/`x` mark cycle on right
+   click, and the shared mistake-highlighting toggle (`error`/`satisfied`) **on by default**.
+2. Futoshiki: difficulty tiers instead of minimal clues (its own deduction check fails 0/3 at 5×5,
+   1/3 at 4×4 — Generator QA), plus a 4×4 test case.
+3. Small UI corrections: Test Mode alphabetical with greyed placeholders; "Create your own puzzle"
+   → `../index.html` on Nurikabe and Train Tracks.
+4. Fill the `human` (deduction-only) column for Akari, Hashi, Skyscrapers, Nurikabe, Train Tracks —
+   Binairo's `logicSolvable` is the pattern.
+5. Hashi migration (shared secret lock, `index.html`, drop its own `package.json`).
+6. Deferred by the owner: Pictogram/Nonogram divergence research; Pictogram `photo` test failure.
+
+**Verified by the owner's Browser job, not by the agent:** every visual change this session (board
+colours, Nurikabe's two-state feel, Train Tracks' counts). Nothing visual was eyeballed here (R17).

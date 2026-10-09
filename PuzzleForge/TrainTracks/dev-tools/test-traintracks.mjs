@@ -32,7 +32,11 @@ for (const [W, H] of [[4, 4], [6, 6], [8, 8], [10, 10]]) {
     check(`${W}x${H} solution satisfies every rule`, tt.isSolved(W, H, p.rowClue, p.colClue, p.givens, p.solution));
     check(`${W}x${H} has a real loop (>= 4 cells)`, track >= 4);
     check(`${W}x${H} pieces all join exactly two sides`, p.solution.every(q => q === 0 || [3, 5, 6, 9, 10, 12].includes(q)));
-    console.log(`${W}x${H}: attempts ${p.attempts}, track ${track}, hidden clues ${[...p.rowClue, ...p.colClue].filter(v => v < 0).length}, ${took} ms`);
+    // Owner direction (decisions/0005): in this puzzle family the row and column counts ARE the
+    // clues, so every one of them is published — hiding a count is a defect, not a difficulty.
+    const hidden = [...p.rowClue, ...p.colClue].filter(v => v < 0).length;
+    check(`${W}x${H} shows every row and column count`, hidden === 0);
+    console.log(`${W}x${H}: attempts ${p.attempts}, track ${track}, hidden clues ${hidden}, pre-filled ${p.givens.filter(g => g !== 7).length}, ${took} ms`);
     check(`${W}x${H} generated under 5 s`, took < 5000);
 }
 

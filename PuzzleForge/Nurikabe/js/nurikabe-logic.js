@@ -11,9 +11,9 @@
 // The generator builds a solution first (random islands, then the sea), reads the clues off it,
 // and ships the board only when a limit-2 search proves the clues have exactly one solution —
 // the message lock depends on that (notes/AGENTS.md invariant 4).
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.25logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.25logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.25logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.26logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.26logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.26logic';
 
 // Two states only (decisions/0005): white (island) and black (sea). There is no "unknown" cell in
 // the player vocabulary — white is the default — so the rule check rejects anything else as malformed.
