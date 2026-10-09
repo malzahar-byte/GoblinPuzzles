@@ -57,7 +57,7 @@ const TESTS = [
     ['Akari', '/PuzzleForge/Akari/index.html?id=-KlsFRx2FhkpF-pIiw-1o_8'],
     ['Skyscrapers', '/PuzzleForge/Skyscrapers/index.html?id=gzgFO4xGy3asIIwGwqevitb'],
     ['Binairo', '/PuzzleForge/Binairo/index.html?id=UYoVSdZVsWq2ijTjWuA2Jk'],
-    ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=--d_-O_ig-Vco-qoo-o-M-i-gggdk-F-dE-ci_-sa-_gaa_'],
+    ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=Ez_F525GqUHwU-gEpo-Vgfn'],
     ['Nonogram', '/PuzzleForge/Nonogram/index.html?id=EkjCQkVo_E1zztIsWQNdH2j2pF'],
     ['Nurikabe', '/PuzzleForge/Nurikabe/index.html?id=-g-g--ccFqi-s-qa-kE----Ea-agEpEgio-olaK-_E-qQ------Eca--d-IcdacF-g-uF-Fg---'],
 ];

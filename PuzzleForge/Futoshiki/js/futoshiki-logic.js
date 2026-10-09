@@ -1,8 +1,9 @@
 // Futoshiki logic. No DOM. Latin square 1..N + adjacent inequalities (0 = none, 1 = '<', 2 = '>').
 // ineqH[r*(N-1)+c] is between (r,c) and (r,c+1); ineqV[r*N+c] between (r,c) and (r+1,c).
 // Player grid: 0 = empty, 1..N = value.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.6logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.6logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.7logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.7logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.7logic';
 
 export const ACTION_TYPE = { CELL: 0 };
 export const MAXN = 15;
@@ -216,7 +217,9 @@ export function logicSolvable(N, givens, ineqH, ineqV) {
 // within these nodes is treated as "not unique yet" (the safe direction: it just gets more
 // clues); the finished puzzle is re-verified with the full default budget.
 const GEN_NODES = 25000;
-const GEN_DEDUPE_BUDGET_MS = 1500; // larger boards skip the dedupe pass rather than hang
+// The dedupe pass is capped by SOLVES, not wall-clock time: generation must be deterministic for a
+// given rng stream, because a seeded link rebuilds its board from its seed (invariant 1).
+const GEN_DEDUPE_SOLVES = 64;
 
 export function generate(N, rng = Math.random, opts = {}) {
   const tries = opts.tries ?? 120;
@@ -250,7 +253,6 @@ export function generate(N, rng = Math.random, opts = {}) {
       return !res.aborted && res.count === 1;
     };
 
-    const startedAt = Date.now();
     const used = [];
     let unique = false;
     for (const s of shuffleArr(slots.slice(), rng)) {
@@ -261,10 +263,12 @@ export function generate(N, rng = Math.random, opts = {}) {
 
     // 2) Dedupe: growing in random order stops at the first unique set, which usually holds
     //    redundant clues. Drop every clue the puzzle does not need, so neither the sign count
-    //    nor the number count is inflated. Skipped (with what is already there) when a try has
-    //    spent its budget, so the biggest boards still return promptly.
-    if (Date.now() - startedAt < GEN_DEDUPE_BUDGET_MS) {
+    //    nor the number count is inflated. The pass stops after a fixed number of solves, so the
+    //    biggest boards still return promptly and the same seed always takes the same steps.
+    {
+      let left = GEN_DEDUPE_SOLVES;
       for (const s of shuffleArr(used.slice(), rng)) {
+        if (left-- <= 0) break;
         clear(s);
         if (!isUnique(GEN_NODES)) apply(s);
       }
@@ -279,31 +283,65 @@ export function generate(N, rng = Math.random, opts = {}) {
 
 const keyBits = (grid) => bitsFrom(grid, 4);
 
-export function encodeLink(N, givens, ineqH, ineqV, message, msgType = 0) {
-  const res = solve(N, givens, ineqH, ineqV, 2);
+// ---- link ("the link is the save file"): message-seeded, version 2 ----
+//
+// The link stores the seed, never the board: the same message + size always gives the same puzzle
+// and the same link, and parseLink rebuilds givens and signs from the seed. Only version 2 is
+// read; there is no v1 decoder (invariant 2 — old versions are retired, not kept readable).
+export const LINK_VERSION = 2;
+
+export function seedFromMessage(message) {
+  return hash(Array.from(message).map(charToNum)) & 0x7fffffff;
+}
+
+export function generateFromSeed(N, seed) {
+  return generate(N, getRandomizer(seed), { tries: 120 });
+}
+
+// The message hash, advanced until it yields a unique puzzle — deterministic for the same input.
+export function seedForMessage(N, message, tries = 4000) {
+  let seed = seedFromMessage(message);
+  for (let i = 0; i < tries; i++) {
+    if (generateFromSeed(N, seed)) return seed;
+    seed = (seed + 1) & 0x7fffffff;
+  }
+  return -1;
+}
+
+export function encodeSeededLink(N, seed, message, msgType = 0) {
+  const p = generateFromSeed(N, seed);
+  if (!p) throw new Error('No unique puzzle for this seed');
+  const res = solve(N, p.givens, p.ineqH, p.ineqV, 2);
   if (res.count !== 1 || res.aborted) throw new Error('Puzzle must have exactly one solution');
   const enc = lockMessage(message, msgType, keyBits(res.grid));
-  const g = new BitSeq(); for (let i = 0; i < N * N; i++) g.appendNum(givens[i] | 0, 4);
-  const h = new BitSeq(); for (const t of ineqH) h.appendNum(t, 2);
-  const v = new BitSeq(); for (const t of ineqV) v.appendNum(t, 2);
-  const len = 6 + 3 + 6 + 6 + N * N * 4 + ineqH.length * 2 + ineqV.length * 2 + 1 + enc.length();
+  const len = 6 + 3 + 6 + 6 + 31 + 1 + enc.length();
   const gap = (6 - len % 6) % 6;
-  const b = new BitSeq().appendNum(0, 6).appendNum(gap, 3).appendNum(0, gap).appendNum(N - 3, 6).appendNum(N - 3, 6);
-  b.append(g.get()).append(h.get()).append(v.get()).appendNum(msgType, 1).append(enc.get());
+  const b = new BitSeq().appendNum(LINK_VERSION - 1, 6).appendNum(gap, 3).appendNum(0, gap)
+    .appendNum(N - 3, 6).appendNum(N - 3, 6)
+    .appendNum(seed, 31).appendNum(msgType, 1).append(enc.get());
   return b.getShuffled().toAlphas();
+}
+
+// What a creator calls: message (+ size) -> the link, deterministically.
+export function encodeFromMessage(N, message, msgType = 0) {
+  const seed = seedForMessage(N, message);
+  if (seed < 0) throw new Error('Could not seed a unique puzzle for this message at this size');
+  return encodeSeededLink(N, seed, message, msgType);
 }
 
 export function parseLink(id) {
   const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
   const version = 1 + rd.readNum(6);
-  if (version !== 1) throw new Error('Unknown Futoshiki link version ' + version);
+  if (version !== LINK_VERSION) throw new Error('Unknown Futoshiki link version ' + version);
   rd.readNum(rd.readNum(3));
   const N = rd.readNum(6) + 3; rd.readNum(6);
-  const givens = []; for (let i = 0; i < N * N; i++) givens.push(rd.readNum(4));
-  const ineqH = []; for (let i = 0; i < N * (N - 1); i++) ineqH.push(rd.readNum(2));
-  const ineqV = []; for (let i = 0; i < (N - 1) * N; i++) ineqV.push(rd.readNum(2));
+  // Seeded link: givens and signs are rebuilt from the seed, never stored.
+  const seed = rd.readNum(31);
   const msgType = rd.readNum(1);
-  return { version, N, givens, ineqH, ineqV, msgType, enc: new BitSeq(rd.read()) };
+  const enc = new BitSeq(rd.read());
+  const p = generateFromSeed(N, seed);
+  if (!p) throw new Error('Seeded Futoshiki link does not generate a puzzle');
+  return { version, N, givens: p.givens, ineqH: p.ineqH, ineqV: p.ineqV, seed, msgType, enc };
 }
 
 export const decryptMessage = (enc, msgType, grid) => unlockMessage(enc, msgType, keyBits(grid));

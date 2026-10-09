@@ -1,5 +1,5 @@
 // Akari's own settings: wraps the shared settings store. Made from shared/puzzle-template/settings.js.
-import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.6logic';
+import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.7logic';
 
 const KEY = 'gdp-akari-settings';
 export const SETTINGS_KEY = KEY;
