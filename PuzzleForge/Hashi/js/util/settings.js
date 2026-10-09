@@ -1,6 +1,6 @@
 // Hashi's own settings: wraps the shared Goblin Does Puzzles settings store. Made from
 // shared/puzzle-template/settings.js.
-import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.2logic';
+import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.3logic';
 
 const KEY = 'gdp-hashi-settings';
 export const SETTINGS_KEY = KEY; // the ONLY place this string is allowed to be written

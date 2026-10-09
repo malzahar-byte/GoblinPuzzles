@@ -54,7 +54,7 @@ const PLANNERS = {
 const TESTS = [
     ['Pictogram', '/PuzzleForge/Pictogram/index.html?id=cCM-Fl-sEWICog_V'],
     ['Hashi', '/PuzzleForge/Hashi/play.html?id=-Xrybal-KMq-okrX60hypwGl'],
-    ['Akari', '/PuzzleForge/Akari/index.html?id=ooAqM4-kPW8e--eiYWs-1Iwg-_dEkY2WW--&_gdp=muu0wg83'],
+    ['Akari', '/PuzzleForge/Akari/index.html?id=-KlsFRx2FhkpF-pIiw-1o_8'],
     ['Skyscrapers', '/PuzzleForge/Skyscrapers/index.html?id=_GkduhIEGcUqE-d-sFF-j-Ehwh--aeaUka-fyxo'],
     ['Binairo', '/PuzzleForge/Binairo/index.html?id=IeqUb-UsJEgNoQQGcb_XI-Eskk-c'],
     ['Futoshiki', '/PuzzleForge/Futoshiki/index.html?id=--d_-O_ig-Vco-qoo-o-M-i-gggdk-F-dE-ci_-sa-_gaa_'],

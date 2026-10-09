@@ -15,12 +15,6 @@ for (let i = 0; i < N; i++) {
   const res = akari.solve(p.R, p.C, p.walls, p.nums, 2);
   check('unique solution #' + i, res.count === 1 && !res.aborted);
   check('solution satisfies rules #' + i, akari.isSolved(p.R, p.C, p.walls, p.nums, p.solution));
-  const id = akari.encodeLink(p.R, p.C, p.walls, p.nums, 'Hello ' + i, 0);
-  const parsed = akari.parseLink(id);
-  check('roundtrip size #' + i, parsed.R === p.R && parsed.C === p.C);
-  check('roundtrip walls #' + i, parsed.walls.join('') === p.walls.join(''));
-  check('roundtrip nums #' + i, parsed.nums.join(',') === p.nums.join(','));
-  check('message decrypts #' + i, akari.decryptMessage(parsed.enc, parsed.msgType, p.solution) === 'Hello ' + i);
 }
 // ---- version-2 links: the same message, size and options must give the same puzzle and link ----
 const MSG = 'Cloud Logic 1';
@@ -36,14 +30,17 @@ check('seeded: message decrypts with the solution', akari.decryptMessage(pA.enc,
 check('seeded: a different message gives a different link', akari.encodeFromMessage(7, 7, 'Another secret', 0) !== idA);
 const g1 = akari.generateFromSeed(7, 7, 12345), g2 = akari.generateFromSeed(7, 7, 12345);
 check('seeded: generator is deterministic for a seed', !!g1 && !!g2 && g1.walls.join('') === g2.walls.join(''));
+const idSeed = akari.encodeSeededLink(7, 7, 12345, 'Pinned seed', 0);
+const pSeed = akari.parseLink(idSeed);
+const solSeed = akari.solve(pSeed.R, pSeed.C, pSeed.walls, pSeed.nums, 2);
+check('seeded: pinned seed round-trips to the same board',
+  pSeed.version === 2 && pSeed.seed === 12345 && pSeed.walls.join('') === g1.walls.join(''));
+check('seeded: pinned-seed message decrypts', akari.decryptMessage(pSeed.enc, pSeed.msgType, solSeed.lamps) === 'Pinned seed');
 
-// ---- version-1 links (the board stored in the URL) keep working forever ----
-const oldP = akari.generate(6, 6, mulberry32(7), { tries: 400 });
-if (oldP) {
-  const back = akari.parseLink(akari.encodeLink(oldP.R, oldP.C, oldP.walls, oldP.nums, 'old link', 0));
-  check('v1: board link still parses', back.version === 1 && back.walls.join('') === oldP.walls.join(''));
-  check('v1: nums survive', back.nums.join(',') === oldP.nums.join(','));
-}
+// ---- old link versions are retired, not kept readable (invariant 2) ----
+let rejected = false;
+try { akari.parseLink('ooAqM4-kPW8e--eiYWs-1Iwg-_dEkY2WW--'); } catch (e) { rejected = true; }
+check('v1 link is rejected (no legacy decoder)', rejected);
 console.log(`generated ${made}/${N} puzzles`);
 console.log(fails === 0 ? 'All Akari checks passed.' : `${fails} failure(s).`);
 process.exit(fails === 0 ? 0 : 1);

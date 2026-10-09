@@ -8,9 +8,9 @@
 //
 // Rules: every white cell must be lit; no two lamps may see each other (same row/col, no wall
 // between); every numbered wall must have exactly that many adjacent lamps.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.2logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.2logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.2logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.3logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.3logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.3logic';
 
 export const CELL = { EMPTY: 0, LAMP: 1, MARK: 2 };
 export const ACTION_TYPE = { CELL: 0 };
@@ -163,9 +163,9 @@ const solutionKey = (lamps) => bitsFrom(lamps);
 // version-2 link stores the seed only — the board is rebuilt from it — and the message stays
 // XOR-locked against the solution that seed produces.
 //
-// NOTE: a version-2 link depends on generate() staying exactly as it is. If the generator is ever
-// changed, freeze a copy for this version, or old seeded links stop reproducing (the same rule
-// Pictogram's seed-based v1 links live under).
+// Only this version is read: there is no v1 decoder (invariant 2 — old link versions are
+// retired, never kept readable). If generate() is ever changed, seeded links stop reproducing;
+// that is accepted, not a reason to freeze a copy of the old generator.
 export const LINK_VERSION = 2;
 
 // The options a seeded link is always built and rebuilt with: one value, used by both sides, so a
@@ -211,40 +211,19 @@ export function encodeFromMessage(R, C, message, msgType = 0) {
   return encodeSeededLink(R, C, seed, message, msgType);
 }
 
-export function encodeLink(R, C, walls, nums, message, msgType = 0) {
-  const res = solve(R, C, walls, nums, 2);
-  if (res.count !== 1 || res.aborted) throw new Error('Puzzle must have exactly one solution');
-  const enc = lockMessage(message, msgType, solutionKey(res.lamps));
-  const numSeq = new BitSeq();
-  for (let i = 0; i < R * C; i++) if (walls[i]) numSeq.appendNum(nums[i] < 0 ? 0 : nums[i], 3);
-  const len = 6 + 3 + 6 + 6 + R * C + numSeq.length() + 1 + enc.length();
-  const gap = (6 - len % 6) % 6;
-  const b = new BitSeq().appendNum(0, 6).appendNum(gap, 3).appendNum(0, gap)
-    .appendNum(R - 3, 6).appendNum(C - 3, 6);
-  b.append(walls.join('')).append(numSeq.get()).appendNum(msgType, 1).append(enc.get());
-  return b.getShuffled().toAlphas();
-}
-
 export function parseLink(id) {
   const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
   const version = 1 + rd.readNum(6);
-  if (version !== 1 && version !== LINK_VERSION) throw new Error('Unknown Akari link version ' + version);
+  if (version !== LINK_VERSION) throw new Error('Unknown Akari link version ' + version);
   rd.readNum(rd.readNum(3));
   const R = rd.readNum(6) + 3, C = rd.readNum(6) + 3;
-  if (version === LINK_VERSION) {
-    // Seeded link: the board is rebuilt from the seed, never stored.
-    const seed = rd.readNum(31);
-    const msgType = rd.readNum(1);
-    const enc = new BitSeq(rd.read());
-    const p = generateFromSeed(R, C, seed);
-    if (!p) throw new Error('Seeded Akari link does not generate a puzzle');
-    return { version, R, C, walls: p.walls, nums: p.nums, seed, msgType, enc };
-  }
-  const walls = rd.read(R * C).split('').map(Number);
-  const nums = new Array(R * C).fill(-1);
-  for (let i = 0; i < R * C; i++) if (walls[i]) nums[i] = rd.readNum(3);
+  // Seeded link: the board is rebuilt from the seed, never stored.
+  const seed = rd.readNum(31);
   const msgType = rd.readNum(1);
-  return { version, R, C, walls, nums, msgType, enc: new BitSeq(rd.read()) };
+  const enc = new BitSeq(rd.read());
+  const p = generateFromSeed(R, C, seed);
+  if (!p) throw new Error('Seeded Akari link does not generate a puzzle');
+  return { version, R, C, walls: p.walls, nums: p.nums, seed, msgType, enc };
 }
 
 // lamps: player's per-cell 0/1 (walls 0).
