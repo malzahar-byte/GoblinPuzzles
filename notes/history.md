@@ -169,3 +169,31 @@ Append only; a correction is a new entry, never an edit.
 - Also this round: `TEST-RESULTS.md` names the build it ran against (header + per-section), and
   `dev-tools/bump-build.mjs` steps `GDP_BUILD` and every `?v=` on each commit.
 - RAN: `node dev-tools/check-all.mjs` → 13 pass, 0 fail, 0 unrun. Pushed to `main`.
+
+## 2026-10-09 — Cloud_Cline_1 — owner bug-report round triaged read-only; no product code changed
+
+- Read `notes/` in full (README, AGENTS, state, testing, backlog, history, `interfaces/`) plus the
+  code the owner's 14-point bug report touches. No test was run and no product code was changed
+  (R16/R4); the only non-notes edit is the R7 build step. The findings are filed one line each in
+  `backlog.md` under "Owner bug report (2026-10-09)".
+- Root causes found by reading, not by testing: **the board surface is the palette's first *cell*
+  colour.** `chromeFrom()` in `shared/gdp-palettes.js` builds `surface` from `p.cells[0]`, and no
+  file anywhere reads the palette's `bg`; in light theme Paper/Mono/Ocean/Candy land within a few
+  RGB points of `--gdp-bg` (dark theme: Neon), so the board fill looks like the page — and because
+  Nurikabe draws an island as "no fill", its first click looks like nothing happened.
+- **Train Tracks' sparse look is the generator, not the renderer.** Parsed the Forge 6×6 example:
+  `rowClue` is all hidden, `colClue` shows a single `2`, and 31 of 36 cells are free — the puzzle is
+  unique-solvable (solve count 1), but it reads as unfinished. The margin-drawing code is fine.
+- **Runner:** the 5 s page heartbeat is throttled to ~1/min once Chrome hides a tab for minutes, so
+  the 20 s idle grace shuts the server down on a long tab-away; and `findChrome()` only finds Chrome
+  in the standard install spots, otherwise Edge.
+- **Two more, both small:** Nurikabe's "Create your own puzzle" points at its own `creator.html`
+  where every other page points at `../index.html`; the Test-Mode order in `PuzzleForge/index.html`
+  lists Nurikabe after Futoshiki while the puzzle grid lists it before Skyscrapers.
+- **Confirmed by the owner's pasted results, not re-run:** gate 13 pass / 0 fail / 0 unrun (2 slow
+  not run); Pictogram `test-image.mjs` 1 failure in the `photo` preset group; `test-roundtrip.mjs`
+  187/187 v3 and 3/3 legacy v2; Browser job 9 puzzles solved by clicks, no page errors.
+- **Refuted by inspection:** Nurikabe's Forge example has 13 clues and **exactly one** solution
+  (solve limit 3 → 1), so the "multiple solutions" suspicion does not hold for that board; the
+  sparse Futoshiki example (5 givens, 3 signs) is likewise unique.
+

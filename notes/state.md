@@ -56,6 +56,13 @@ The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser check
   Nonogram gained the "Show grid" toggle (it hides the thin cell lines; the 5-cell lines and the
   frame stay) and a `grid: true` default; Hashi's background toggle moved from the odd
   `board: 'panel'|'none'` key to the standard `surface` flag.
+- **Owner bug report (2026-10-09)** — the owner's 14-point report was triaged read-only by
+  Cloud_Cline_1 and filed one line each in `backlog.md` ("Owner bug report (2026-10-09)"). Nothing
+  is fixed yet. Two of the items (the board surface colour and a "given" cell tint) are `shared/`
+  changes and need the owner's approval first (R6/R8). Two of the owner's suspicions are refuted:
+  Nurikabe's Forge example has exactly one solution (13 clues), and the sparse Futoshiki example is
+  unique too — both read as "wrong" mainly because the board surface is invisible.
+
 
 ## shared/ — generic layer, reused by every puzzle
 

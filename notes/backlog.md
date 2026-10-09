@@ -165,3 +165,46 @@ adapter, unique generator, BitSeq codec, shared secret lock):
 - `done` — **R16/R17 clarified:** answers are read, reasoned and written in the agent's own words
   (not a verbatim note); agent tests must be few, easy, deterministic and fail only for a real
   defect — hard, slow or browser checks go to the owner's runner.
+
+## Owner bug report (2026-10-09) — triaged by Cloud_Cline_1, read-only, nothing fixed yet
+
+Evidence for each line is the owner's report plus code reading; the root causes are in the
+2026-10-09 `history.md` entry. Do not start any of these without the owner's go-ahead (R3), and the
+two `shared/` ones need approval first (R6/R8).
+
+- `proposed` — **Board surface is nearly invisible in several styles.** `chromeFrom()` builds
+  `surface` from `p.cells[0]` (a *cell* colour) and no file reads the palette's `bg`; light-theme
+  Paper/Mono/Ocean/Candy sit within a few RGB points of `--gdp-bg` (dark theme: Neon), so "Show
+  board background" shows nothing and the toggle looks dead. → `interfaces/palette-chrome.md`.
+- `proposed` — **Nurikabe's first click looks like nothing happened.** An island is drawn as "no
+  fill" — the board surface — so with the surface invisible nothing appears until the second click
+  paints sea. Same root cause as the line above: give islands a drawn state of their own. →
+  `PuzzleForge/Nurikabe/js/nurikabe-board.js`.
+- `proposed` — **Train Tracks hides too many clues to look like a puzzle.** The Forge 6×6 example
+  has every row count hidden, one visible column count and 5 pre-filled cells; it is unique but
+  near-empty. Give the generator a floor (a visible count per row/column, or a minimum count). →
+  `PuzzleForge/TrainTracks/js/traintracks-logic.js`.
+- `proposed` — **Pre-filled cells are not visually distinct.** Futoshiki, Binairo, Skyscrapers,
+  Nurikabe clue numbers and Train Tracks givens are drawn with the same `ink` as player values.
+  Wants a per-style "given" tint. → `interfaces/palette-chrome.md` (new key).
+- `proposed` — **Pencil marks and a right-click cycle.** Futoshiki/Binairo/Skyscrapers right-click
+  only clears (on an empty cell it does nothing) and Nurikabe cycles unknown → island → sea; the
+  owner wants a greyed `(?)` mark track, and `x` for "no track here" in Train Tracks, on both
+  buttons. A per-puzzle cell state, not a shell change. → the four `*-board.js` files.
+- `proposed` — **Futoshiki test size.** `test-futoshiki.mjs` hardcodes `N = 5`; the supported range
+  is 4–8, so the smallest supported size (4×4) should be covered as well. →
+  `PuzzleForge/Futoshiki/dev-tools/test-futoshiki.mjs`.
+- `proposed` — **Test-Mode order ≠ puzzle order** in `PuzzleForge/index.html`: the grid lists
+  Nurikabe before Skyscrapers, `TEST_LINKS` puts it after Futoshiki. → `PuzzleForge/index.html`.
+- `proposed` — **`click-solve.mjs` keeps its own copy of the nine Test-Mode links,** so a
+  regenerated Forge link silently desyncs the Browser job. Read them from one home (see the "single
+  puzzle registry" item above). → `dev-tools/browser-checks/click-solve.mjs`.
+- `proposed` — **Runner opens Edge, and a long tab-away stops the server.** `findChrome()` only
+  looks in the standard Chrome install spots (then Edge), and the page's 5 s heartbeat is throttled
+  to ~1/min once the tab has been hidden for minutes — past the 20 s idle grace. →
+  `dev-tools/local-runner.mjs`.
+- `proposed` — **Gate progress.** `check-all.mjs` prints nothing until the final table; a `k/n`
+  line per job (and the current test name) is wanted. → `dev-tools/check-all.mjs`.
+- `proposed` — **Pictogram `test-image.mjs` fails one `photo`-preset case** (owner's Full run, build
+  `13.0.11logic`). One investigation run, not a blind fix. → `testing.md`.
+
