@@ -16,6 +16,15 @@ Nonogram puzzle (below); the Hashi click-on-bridge defect was fixed; a headless-
 gate now covers all seven pointer puzzles (incl. Pictogram); and `GDP_BUILD` / every `?v=` is `13.0.0logic`. The
 per-puzzle facts below are updated where they changed.
 
+Source note for the v13_Logic third round (2026-10-09, owner corrections): the "old links keep
+working forever" reading of invariant 2 was retired — only the current link version must work and
+legacy decoders are removed; R7 now steps `GDP_BUILD` on every commit through
+`dev-tools/bump-build.mjs` (save points included; a big version is the owner's call); invariant 1
+now spells out "same message + options ⇒ same puzzle and same link"; R16 answers are read, reasoned
+and written in the agent's own words; R17 agent tests must be few, easy, deterministic and fail
+only for a real defect. Akari became the first message-seeded link (`LINK_VERSION = 2`).
+`TEST-RESULTS.md` now names the build it ran on.
+
 Source note for the v13_Logic second round (2026-10-08, owner review): the reload-renders-unsolved
 defect and the board-opens-cropped defect were both fixed; every puzzle moved onto the one shared
 settings panel; Binairo's rules text gained the three-in-a-row ban and its generator gained a
@@ -30,10 +39,12 @@ The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser check
   The loop builder works; **`solve()` reports 0 solutions on a valid loop, so `generate()` returns
   null** — mid-debug, `__ttDbg2` hooks still in the file. No board/player/creator/test/Forge entry.
   Pick up at `solve()`.
-- **Message-deterministic generation** — Nonogram/Pictogram derive their seed from the message;
-  Hashi, Akari, Skyscrapers, Binairo, Futoshiki and Nurikabe use `Math.random` and store the board
-  in the link, so the same message does not reproduce the same puzzle. The owner says it matters.
-  Plan in `backlog.md`.
+- **Message-deterministic generation** — the theme, now invariant 1: same message + options ⇒ same
+  puzzle and same link. Nonogram/Pictogram already derive their seed from the message; **Akari is
+  converted** (link v2 stores the seed, board regenerated; `encodeFromMessage`). Hashi,
+  Skyscrapers, Binairo, Futoshiki and Nurikabe still use `Math.random` and store the board in a v1
+  link — convert them the same way (v2 only; no legacy decoders, invariant 2). Train Tracks is
+  built seeded from the start. Plan in `backlog.md`.
 - **Pictogram / Nonogram settings panel** — both still hand-wire the panel in `player.js` (old
   markup, `boardSelect` id, no "Show grid"). They are on the shared board shell and shared palettes;
   only this migration is missing. See `backlog.md`.

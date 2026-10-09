@@ -125,8 +125,8 @@ The v12 rows below are still valid where their code did not change. The v13_Logi
 - What makes them slow is the uniqueness repair on noisy grids at the largest sizes: one 60×60 noisy
   case measured 23 s and ended unsolved (the sweep counts that as "skipped"), while the same size as
   a structured picture measured 17 ms.
-- **Versioned URLs:** asset checks strip the `?v=` query. Current build string is
-  `13.0.0logic` (bumped by owner direction for the v13_Logic round); normally only the combiner
-  bumps it and re-points every `?v=` (`interfaces/assets-versioning.md`).
+- **Versioned URLs:** asset checks strip the `?v=` query. Every commit steps the build
+  (`node dev-tools/bump-build.mjs`; R7) and re-points every `?v=` in the same pass; the current
+  string is whatever `shared/gdp-fresh.js` holds (`interfaces/assets-versioning.md`).
 - No access to deploy, and the published site root 404s — the site is served from
   `…/GoblinPuzzles/PuzzleForge/`.

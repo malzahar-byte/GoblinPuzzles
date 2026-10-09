@@ -9,7 +9,7 @@
 // first-party <link>, <script> and local import carries "?v=GDP_BUILD", so a new build is a new
 // URL no cache has. No button can purge a CDN's own copy — if a deploy is seconds old, waiting
 // ~10 minutes (GitHub Pages' cache TTL) is the fallback.
-export const GDP_BUILD = '13.0.1logic';
+export const GDP_BUILD = '13.0.2logic';
 
 export async function clearAppCaches() {
   try {

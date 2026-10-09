@@ -114,3 +114,24 @@ Append only; a correction is a new entry, never an edit.
   `backlog.md` marks Nurikabe done, Train Tracks doing, Crossword blocked on its lock question, and
   carries the owner-review round section.
 - RAN: `node dev-tools/check-docs.mjs` → pass. Pushed to `main` (`620f310` rules, this commit docs).
+
+## 2026-10-09 — Cloud_Logic — owner corrections: no backwards compatibility, per-commit build steps
+
+- Owner correction, third attempt: **old links are not a distribution channel.** Invariant 2 is now
+  "only the current version must work" — no legacy decoders, no "old links still decode" paths, no
+  compatibility work unless the owner asks. The Akari v2 commit's v1 decode branch is removed in the
+  next commit; Pictogram's dead legacy branches are cleaned when its settings panel is migrated.
+- **R7 rewritten — every commit steps the version.** `dev-tools/bump-build.mjs` bumps
+  `GDP_BUILD` one patch step and re-points every `?v=` (137 URLs, 36 files) in one pass; save
+  points step it too, and only the owner calls a big version. The first stepped build is
+  `13.0.1logic`.
+- **Invariant 1 now includes message determinism:** same message + same options ⇒ same puzzle and
+  same link, and `Math.random` is never part of generation. Akari is the first converted puzzle.
+- **R16/R17 tightened for the owner:** R16 says answers must be read, reasoned and synthesized in
+  the agent's own words, never a verbatim note; R17 says agent tests must be few, easy,
+  deterministic and fail only for a real defect, with hard/slow/browser checks living in the
+  owner's runner.
+- **Runner report:** `TEST-RESULTS.md` now opens with the build it ran against (and sections keep
+  their per-run `build …`), so a copied-back result always says which version produced it.
+- RAN: `node dev-tools/check-all.mjs` → 12 pass, 0 fail, 0 unrun (2 slow Pictogram sweeps not run).
+  Pushed to `main`.

@@ -147,3 +147,21 @@ adapter, unique generator, BitSeq codec, shared secret lock):
   instead of a new document. → `AGENTS.md`.
 - `approved` — **Nurikabe, Train Tracks and Crossword after the two in-flight items** (owner
   direction for this mission; Crossword only once its lock question is answered).
+
+## Owner corrections (2026-10-09)
+
+- `done` — **Old links are not preserved.** The "old links keep working" reading had been denied
+  repeatedly and is gone: invariant 2 now says only the current link version must work, legacy
+  decoders and "still decoding" paths are removed, and no effort goes to backward compatibility.
+  Akari's v1 decoder is first to go; its v2 link is the only format.
+- `done` — **Every commit steps the build.** R7 rewritten: `node dev-tools/bump-build.mjs` steps
+  `GDP_BUILD` one patch (`13.0.0logic` → `13.0.1logic`) and re-points all 137 `?v=` URLs; save
+  points included. A big version (new number or round suffix) is the owner's call only.
+- `done` — **Same message + options = same puzzle** is spelled out in invariant 1. Akari is the
+  first converted puzzle (link v2 stores the seed, the board is regenerated from it); Hashi,
+  Skyscrapers, Binairo, Futoshiki and Nurikabe follow, then Train Tracks is built seeded.
+- `done` — **The runner report names the build it ran on** (header line plus per-section
+  `build …`), and `dev-tools/local-runner.mjs` is documented as never rewriting files.
+- `done` — **R16/R17 clarified:** answers are read, reasoned and written in the agent's own words
+  (not a verbatim note); agent tests must be few, easy, deterministic and fail only for a real
+  defect — hard, slow or browser checks go to the owner's runner.

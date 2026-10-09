@@ -1,8 +1,8 @@
 // Futoshiki logic. No DOM. Latin square 1..N + adjacent inequalities (0 = none, 1 = '<', 2 = '>').
 // ineqH[r*(N-1)+c] is between (r,c) and (r,c+1); ineqV[r*N+c] between (r,c) and (r+1,c).
 // Player grid: 0 = empty, 1..N = value.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.1logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.1logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.2logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.2logic';
 
 export const ACTION_TYPE = { CELL: 0 };
 export const MAXN = 15;
