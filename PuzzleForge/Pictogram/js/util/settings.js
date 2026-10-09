@@ -8,7 +8,7 @@ export const SETTINGS_KEY = KEY; // single source of truth: other files must not
 // clearing Pictogram progress can never touch another puzzle's data on the same site.
 export const PROGRESS_PREFIX = 'gdp-pictogram:';
 const OLD_KEY = 'pictogram-settings'; // settings saved before the shared-module rename
-const DEFAULTS = { theme: null, board: 'classic', mark: 'x', surface: true, showTimer: true }; // theme null = follow the device
+const DEFAULTS = { theme: null, board: 'classic', mark: 'x', surface: true, grid: true, showTimer: true }; // theme null = follow the device
 
 // One-time migration: if someone has settings saved under the old key and none yet under
 // the new one, carry them over so switching to the shared module doesn't reset anyone's choices.

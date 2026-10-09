@@ -5,15 +5,16 @@
 // p5.js is no longer used. No behaviour changed: same clicks, same drag rules, same hint
 // check-offs, same undo/redo, same save points, same timer rule, same secret message.
 
-import * as nono from './util/nono-utils.js?v=13.0.10logic';
-import * as idParser from './util/id-parser.js?v=13.0.10logic';
-import { BOARD_STYLES, buildPalette } from './util/board-styles.js?v=13.0.10logic';
-import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js?v=13.0.10logic';
-import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js?v=13.0.10logic';
-import { mountBoard } from '../../../shared/gdp-board.js?v=13.0.10logic';
-import { setupFreshButton } from '../../../shared/gdp-fresh.js?v=13.0.10logic';
-import { createModel } from './nonogram-model.js?v=13.0.10logic';
-import { createNonogramAdapter } from './nonogram-board.js?v=13.0.10logic';
+import * as nono from './util/nono-utils.js?v=13.0.11logic';
+import * as idParser from './util/id-parser.js?v=13.0.11logic';
+import { BOARD_STYLES, buildPalette } from './util/board-styles.js?v=13.0.11logic';
+import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js?v=13.0.11logic';
+import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js?v=13.0.11logic';
+import { setupBoardSettingsPanel } from '../../../shared/gdp-settings-panel.js?v=13.0.11logic';
+import { mountBoard } from '../../../shared/gdp-board.js?v=13.0.11logic';
+import { setupFreshButton } from '../../../shared/gdp-fresh.js?v=13.0.11logic';
+import { createModel } from './nonogram-model.js?v=13.0.11logic';
+import { createNonogramAdapter } from './nonogram-board.js?v=13.0.11logic';
 
 let id = new URLSearchParams(window.location.search).get('id');
 
@@ -45,32 +46,22 @@ function setupSettings() {
     const settings = loadSettings();
     markStyle = settings.mark === 'dot' ? 'dot' : 'x';
 
-    const boardSelect = document.getElementById('boardSelect');
-    for (const [key, style] of Object.entries(BOARD_STYLES)) {
-        const option = document.createElement('option');
-        option.value = key; option.textContent = style.label;
-        boardSelect.appendChild(option);
-    }
-    boardSelect.value = BOARD_STYLES[settings.board] ? settings.board : 'classic';
-    boardSelect.addEventListener('change', () => { saveSettings({ board: boardSelect.value }); applyPalette(); board.render(); });
+    // Theme, board style, background, grid, timer and "clear progress" come from the one shared
+    // panel (shared/gdp-settings-panel.js). Pictogram/Nonogram kept their own copy of that wiring
+    // until 2026-10-09, which is why they were missing the "Show grid" toggle.
+    setupBoardSettingsPanel({
+        load: loadSettings, save: saveSettings, applyTheme, setupThemeButton,
+        styles: BOARD_STYLES, styleKey: 'board',
+        render: () => { applyPalette(); board.render(); },
+        renderTimer,
+        clearProgress: clearPictogramProgress
+    });
+    applyPalette();
 
+    // Pictogram's own extra control: what an empty square shows.
     const markSelect = document.getElementById('markSelect');
     markSelect.value = markStyle;
     markSelect.addEventListener('change', () => { markStyle = markSelect.value; saveSettings({ mark: markStyle }); board.render(); });
-
-    const showTimerCheck = document.getElementById('showTimerCheck');
-    showTimerCheck.checked = settings.showTimer !== false;
-    showTimerCheck.addEventListener('change', () => { saveSettings({ showTimer: showTimerCheck.checked }); renderTimer(); });
-
-    const surfaceCheck = document.getElementById('surfaceCheck');
-    if (surfaceCheck) {
-        surfaceCheck.checked = settings.surface !== false;
-        surfaceCheck.addEventListener('change', () => { saveSettings({ surface: surfaceCheck.checked }); board.render(); });
-    }
-
-    applyTheme();
-    setupThemeButton(document.getElementById('themeBtn'), () => { applyPalette(); board.render(); });
-    applyPalette();
 
     setupSettingsDock(document.getElementById('settingsDock'));
     setupTooltips();
@@ -234,7 +225,6 @@ function setupButtons() {
     document.getElementById('zoomInBtn').addEventListener('click', () => board.zoomIn());
     document.getElementById('zoomOutBtn').addEventListener('click', () => board.zoomOut());
     document.getElementById('resetBtn').addEventListener('click', reset);
-    document.getElementById('clearProgressBtn').addEventListener('click', clearPictogramProgress);
     document.getElementById('saveBtn').addEventListener('click', saveCheckpoint);
     document.getElementById('loadBtn').addEventListener('click', loadCheckpoint);
     updateCheckpointButton();
@@ -253,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     showBoardSize();
 
-    const adapter = createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface: () => loadSettings().surface !== false });
+    const adapter = createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface: () => loadSettings().surface !== false, getGrid: () => loadSettings().grid !== false });
     // Click-solve test hook (dev-tools/browser-checks/click-solve.mjs): centre of each black cell.
     window.__gdpSolverClicks = () => adapter.solverClicks(nono.solveNonogram(puzzle.horHints, puzzle.verHints));
     board = mountBoard(document.getElementById('nonoDiv'), adapter, {

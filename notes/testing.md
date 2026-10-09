@@ -109,6 +109,7 @@ The v12 rows below are still valid where their code did not change. The v13_Logi
 | `check-all.mjs` after the message-seeded conversion (6 puzzles) and Train Tracks | 2026-10-09 | pass — 13 pass, 0 fail, 0 unrun (2 slow not run); includes `TrainTracks/test-traintracks.mjs` |
 | `check-integration.mjs` after the Train Tracks folder | 2026-10-09 | pass (91 files checked) |
 | `browser-checks/click-solve.mjs` — 9 playable puzzles incl. Train Tracks | not run in this sandbox | owner runs it via `Run-Local` → Browser; no browser tooling here (R17) |
+| Pictogram/Nonogram/Hashi settings-panel migration (shared panel, Show grid) | 2026-10-09 | `check-integration.mjs` + gate pass; the visual check (panel controls, grid toggle) belongs to the owner's Browser job |
 
 ## Known sandbox limits
 

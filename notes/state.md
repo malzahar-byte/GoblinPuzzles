@@ -44,18 +44,18 @@ The owner's local runner (`Run-Local.cmd`) is the home of the hard/browser check
 
 ## In flight (save-point state — updated at every commit, cleared when the work lands)
 
-- **Pictogram / Nonogram settings panel** — the only build item left in this round. Both still
-  hand-wire the panel in `player.js` (old markup, `boardSelect` id, no "Show grid") instead of
-  `shared/gdp-settings-panel.js`. They are on the shared board shell and shared palettes; only this
-  migration is missing. See `backlog.md`.
 - **Owner's runner jobs** — the new hard checks (Train Tracks in the Browser job, the seeded-link
   checks in Quick) must be confirmed by the owner's next `Run-Local` run; results come back in
   `TEST-RESULTS.md`.
 - **Crossword** — not started; blocked on one decision: it has no unique solution, so invariant 4
   cannot apply as-is. Options in `backlog.md`.
 - **Landed this round (cleared from In flight):** message-seeded links v2 for Akari, Hashi,
-  Skyscrapers, Binairo, Futoshiki, Nurikabe (v1 decoders deleted, Forge links regenerated) and
-  Train Tracks shipped end to end (`PuzzleForge/TrainTracks/`).
+  Skyscrapers, Binairo, Futoshiki, Nurikabe (v1 decoders deleted, Forge links regenerated); Train
+  Tracks shipped end to end (`PuzzleForge/TrainTracks/`); Pictogram, Nonogram **and** Hashi moved
+  onto `shared/gdp-settings-panel.js` — every player page now uses the one panel. Pictogram and
+  Nonogram gained the "Show grid" toggle (it hides the thin cell lines; the 5-cell lines and the
+  frame stay) and a `grid: true` default; Hashi's background toggle moved from the odd
+  `board: 'panel'|'none'` key to the standard `surface` flag.
 
 ## shared/ — generic layer, reused by every puzzle
 
@@ -75,8 +75,9 @@ settings/progress, secret lock, asset versioning.
 - `gdp-secret.js` — shared XOR secret lock; see `interfaces/secret-lock.md`.
 - `gdp-ui.js` — `setupSettingsDock(dock)` (Escape/outside-click close); no Bootstrap needed.
 - `gdp-settings-panel.js` — `setupBoardSettingsPanel(opts)`: the one settings panel (themes, board
-  style, board background, show grid, timer, clear progress). Seven puzzle pages call it; only
-  Pictogram and Nonogram still hand-wire their own markup (see the In-flight block).
+  style, board background, show grid, timer, clear progress). **All nine player pages call it**
+  (2026-10-09): Pictogram, Nonogram and Hashi were the last hand-wired ones, and Pictogram/Nonogram
+  were missing "Show grid" until then.
 - `gdp-bitseq.js`, `gdp-math-utils.js` — bit-level encode/decode, character set, seeded shuffle.
 - `gdp-board.js` + `gdp-board.css` — the shared SVG board shell; see
   `interfaces/board-adapter.md`. The board box is the only scroller.
@@ -127,6 +128,9 @@ settings/progress, secret lock, asset versioning.
 - **Link is message-seeded v2 (2026-10-09):** `encodeFromMessage(W, H, message)` stores the seed, so
   the same message + size gives the same puzzle and the same link; `parseLink` rebuilds the islands
   from the seed and rejects v1 ids (no legacy decoder). The Forge example is 5×5 "Well done!".
+- **Settings panel (2026-10-09):** moved onto `shared/gdp-settings-panel.js` (`styles: PALETTES`,
+  `styleKey: 'boardStyle'`); the background toggle now uses the standard `surface` flag instead of
+  `board: 'panel'|'none'`, and "Show grid" keeps working through the adapter's `getGrid`.
 
 ## PuzzleForge/Akari/ — built (reference "puzzle kit")
 

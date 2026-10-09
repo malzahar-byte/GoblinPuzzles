@@ -157,3 +157,15 @@ Append only; a correction is a new entry, never an edit.
   click-solve entry.
 - RAN: `node dev-tools/check-all.mjs` → 13 pass, 0 fail, 0 unrun (2 slow Pictogram sweeps not
   run); `node dev-tools/check-integration.mjs` → pass, 91 files. Pushed to `main`.
+
+## 2026-10-09 — Cloud_Logic — one settings panel on every page; runner build stamp
+
+- The last hand-wired settings panels are gone: **Pictogram, Nonogram and Hashi now call
+  `shared/gdp-settings-panel.js`** like the other six player pages. Pictogram/Nonogram gained the
+  missing "Show grid" toggle (the adapter's new `getGrid` hides the thin 1px cell lines, keeping
+  the 5-cell separators and the frame) and a `grid: true` default; Hashi's background toggle moved
+  from its own `board: 'panel'|'none'` pair to the standard `surface` flag, and its
+  `clearProgressBtn` handler is the panel's `clearProgress` callback now.
+- Also this round: `TEST-RESULTS.md` names the build it ran against (header + per-section), and
+  `dev-tools/bump-build.mjs` steps `GDP_BUILD` and every `?v=` on each commit.
+- RAN: `node dev-tools/check-all.mjs` → 13 pass, 0 fail, 0 unrun. Pushed to `main`.

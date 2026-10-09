@@ -12,6 +12,7 @@ import * as nono from './nonogram-logic.js';
 import { BOARD_STYLES, buildPalette } from './nonogram-board.js';
 import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js';
 import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js';
+import { setupBoardSettingsPanel } from '../../../shared/gdp-settings-panel.js';
 import { mountBoard } from '../../../shared/gdp-board.js';
 import { setupFreshButton } from '../../../shared/gdp-fresh.js';
 import { createModel } from './nonogram-logic.js';
@@ -49,32 +50,22 @@ function setupSettings() {
     const settings = loadSettings();
     markStyle = settings.mark === 'dot' ? 'dot' : 'x';
 
-    const boardSelect = document.getElementById('boardSelect');
-    for (const [key, style] of Object.entries(BOARD_STYLES)) {
-        const option = document.createElement('option');
-        option.value = key; option.textContent = style.label;
-        boardSelect.appendChild(option);
-    }
-    boardSelect.value = BOARD_STYLES[settings.board] ? settings.board : 'classic';
-    boardSelect.addEventListener('change', () => { saveSettings({ board: boardSelect.value }); applyPalette(); board.render(); });
+    // Theme, board style, background, grid, timer and "clear progress" come from the one shared
+    // panel (shared/gdp-settings-panel.js). Pictogram/Nonogram kept their own copy of that wiring
+    // until 2026-10-09, which is why they were missing the "Show grid" toggle.
+    setupBoardSettingsPanel({
+        load: loadSettings, save: saveSettings, applyTheme, setupThemeButton,
+        styles: BOARD_STYLES, styleKey: 'board',
+        render: () => { applyPalette(); board.render(); },
+        renderTimer,
+        clearProgress: clearNonogramProgress
+    });
+    applyPalette();
 
+    // Pictogram's own extra control: what an empty square shows.
     const markSelect = document.getElementById('markSelect');
     markSelect.value = markStyle;
     markSelect.addEventListener('change', () => { markStyle = markSelect.value; saveSettings({ mark: markStyle }); board.render(); });
-
-    const showTimerCheck = document.getElementById('showTimerCheck');
-    showTimerCheck.checked = settings.showTimer !== false;
-    showTimerCheck.addEventListener('change', () => { saveSettings({ showTimer: showTimerCheck.checked }); renderTimer(); });
-
-    const surfaceCheck = document.getElementById('surfaceCheck');
-    if (surfaceCheck) {
-        surfaceCheck.checked = settings.surface !== false;
-        surfaceCheck.addEventListener('change', () => { saveSettings({ surface: surfaceCheck.checked }); board.render(); });
-    }
-
-    applyTheme();
-    setupThemeButton(document.getElementById('themeBtn'), () => { applyPalette(); board.render(); });
-    applyPalette();
 
     setupSettingsDock(document.getElementById('settingsDock'));
     setupTooltips();
@@ -238,7 +229,6 @@ function setupButtons() {
     document.getElementById('zoomInBtn').addEventListener('click', () => board.zoomIn());
     document.getElementById('zoomOutBtn').addEventListener('click', () => board.zoomOut());
     document.getElementById('resetBtn').addEventListener('click', reset);
-    document.getElementById('clearProgressBtn').addEventListener('click', clearNonogramProgress);
     document.getElementById('saveBtn').addEventListener('click', saveCheckpoint);
     document.getElementById('loadBtn').addEventListener('click', loadCheckpoint);
     updateCheckpointButton();
@@ -257,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     showBoardSize();
 
-    const adapter = createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface: () => loadSettings().surface !== false });
+    const adapter = createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface: () => loadSettings().surface !== false, getGrid: () => loadSettings().grid !== false });
     // Click-solve test hook (dev-tools/browser-checks/click-solve.mjs): centre of each black cell.
     window.__gdpSolverClicks = () => adapter.solverClicks(nono.solveNonogram(puzzle.horHints, puzzle.verHints));
     board = mountBoard(document.getElementById('nonoDiv'), adapter, {

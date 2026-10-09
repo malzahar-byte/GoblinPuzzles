@@ -11,7 +11,7 @@ import { CELL_MARK, ACTION_TYPE } from './nonogram-model.js';
 const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
 const rgba = (c) => `rgba(${c[0]},${c[1]},${c[2]},${(c[3] ?? 255) / 255})`;
 
-export function createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface }) {
+export function createNonogramAdapter({ model, getPalette, getMarkStyle, getSurface, getGrid }) {
     const MARGIN = 12;
     const CELL = 30;
     const CROSS = CELL / 6;
@@ -69,15 +69,20 @@ export function createNonogramAdapter({ model, getPalette, getMarkStyle, getSurf
         return out;
     }
 
+    // getGrid() false hides the thin cell lines only: the 5-cell separators and the outer frame
+    // stay, so the board still reads as a grid without the busy 1px mesh.
     function drawLines(palette) {
         let out = '';
+        const showGrid = !getGrid || getGrid();
         for (let row = 0; row <= model.numRows; row++) {
             const thick = row === model.numRows || row % 5 === 0;
+            if (!thick && !showGrid) continue;
             const y = gridY + row * CELL;
             out += `<line x1="${MARGIN}" y1="${y}" x2="${gridX + model.numCols * CELL}" y2="${y}" stroke="${rgb(thick ? palette.lineThick : palette.lineThin)}" stroke-width="${thick ? 3 : 1}"/>`;
         }
         for (let col = 0; col <= model.numCols; col++) {
             const thick = col === model.numCols || col % 5 === 0;
+            if (!thick && !showGrid) continue;
             const x = gridX + col * CELL;
             out += `<line x1="${x}" y1="${MARGIN}" x2="${x}" y2="${gridY + model.numRows * CELL}" stroke="${rgb(thick ? palette.lineThick : palette.lineThin)}" stroke-width="${thick ? 3 : 1}"/>`;
         }

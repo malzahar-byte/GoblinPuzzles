@@ -1,5 +1,5 @@
 // Train Tracks' own settings: wraps the shared settings store. Made from shared/puzzle-template.
-import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.10logic';
+import { createSettingsStore, currentTheme as gdpCurrentTheme, applyTheme as gdpApplyTheme, setupThemeButton as gdpSetupThemeButton } from '../../../../shared/gdp-settings.js?v=13.0.11logic';
 
 const KEY = 'gdp-traintracks-settings';
 export const SETTINGS_KEY = KEY; // the ONLY place this string is allowed to be written
