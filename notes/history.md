@@ -197,3 +197,11 @@ Append only; a correction is a new entry, never an edit.
   (solve limit 3 → 1), so the "multiple solutions" suspicion does not hold for that board; the
   sparse Futoshiki example (5 givens, 3 signs) is likewise unique.
 
+## 2026-10-09 — Cloud_Cline_1 — correction to the entry above (R9)
+
+- The entry above says "no file anywhere reads the palette's `bg`". That is wrong: Pictogram's
+  `js/nonogram-board.js` (`render()`) draws `palette.bg` / `palette.solvedBg` as its backdrop. The
+  accurate fact is that the board background has **two** sources — Pictogram/Nonogram use
+  `palette.bg`, while the other eight puzzles use `resolveChrome().surface`, which `chromeFrom()`
+  builds from `p.cells[0]`. The conclusion is unchanged (that surface is a cell colour, so it is
+  near-invisible in several styles), and `backlog.md` was corrected in place in the same commit.

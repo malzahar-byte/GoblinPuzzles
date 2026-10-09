@@ -172,10 +172,12 @@ Evidence for each line is the owner's report plus code reading; the root causes 
 2026-10-09 `history.md` entry. Do not start any of these without the owner's go-ahead (R3), and the
 two `shared/` ones need approval first (R6/R8).
 
-- `proposed` — **Board surface is nearly invisible in several styles.** `chromeFrom()` builds
-  `surface` from `p.cells[0]` (a *cell* colour) and no file reads the palette's `bg`; light-theme
-  Paper/Mono/Ocean/Candy sit within a few RGB points of `--gdp-bg` (dark theme: Neon), so "Show
-  board background" shows nothing and the toggle looks dead. → `interfaces/palette-chrome.md`.
+- `proposed` — **Board surface is nearly invisible in several styles.** There are two different
+  board backgrounds: Pictogram/Nonogram draw `palette.bg` (`js/nonogram-board.js`), while the other
+  eight draw `resolveChrome().surface`, which `chromeFrom()` builds from `p.cells[0]` — a *cell*
+  colour, not the palette's `bg`. Light-theme Paper/Mono/Ocean/Candy land within a few RGB points of
+  `--gdp-bg` (dark theme: Neon), so "Show board background" shows nothing and the toggle looks
+  dead. → `interfaces/palette-chrome.md`.
 - `proposed` — **Nurikabe's first click looks like nothing happened.** An island is drawn as "no
   fill" — the board surface — so with the surface invisible nothing appears until the second click
   paints sea. Same root cause as the line above: give islands a drawn state of their own. →
