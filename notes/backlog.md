@@ -197,11 +197,12 @@ two `shared/` ones need approval first (R6/R8).
   only clears (on an empty cell it does nothing) and Nurikabe cycles unknown → island → sea; the
   owner wants a greyed `(?)` mark track, and `x` for "no track here" in Train Tracks, on both
   buttons. A per-puzzle cell state, not a shell change. → the four `*-board.js` files.
-- `proposed` — **Futoshiki test size.** `test-futoshiki.mjs` hardcodes `N = 5`; the supported range
-  is 4–8, so the smallest supported size (4×4) should be covered as well. →
-  `PuzzleForge/Futoshiki/dev-tools/test-futoshiki.mjs`.
 - `proposed` — **Test-Mode order ≠ puzzle order** in `PuzzleForge/index.html`: the grid lists
   Nurikabe before Skyscrapers, `TEST_LINKS` puts it after Futoshiki. → `PuzzleForge/index.html`.
+- `proposed` — **The Forge's "Play" boxes open each puzzle's `creator.html`,** not its player, while
+  the tag reads "Play" — decide whether the player should be the target or the label should say
+  "Create" (this is also why a player page's "Create your own puzzle" feels like a round trip). →
+  `PuzzleForge/index.html`.
 - `proposed` — **`click-solve.mjs` keeps its own copy of the nine Test-Mode links,** so a
   regenerated Forge link silently desyncs the Browser job. Read them from one home (see the "single
   puzzle registry" item above). → `dev-tools/browser-checks/click-solve.mjs`.

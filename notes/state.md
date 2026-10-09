@@ -202,7 +202,8 @@ settings/progress, secret lock, asset versioning.
 ## PuzzleForge/ — landing page
 
 `index.html` lists every puzzle with status, links the live and in-progress ones, and has a Test
-Mode section with a ready example for every playable puzzle. 13 entries, 9 Test-Mode links
+Mode section with a ready example for every playable puzzle. 12 entries (checked 2026-10-09; this
+line said 13 until then), 9 Test-Mode links
 (Pictogram, Nonogram, Hashi, Akari, Skyscrapers, Binairo, Futoshiki, Nurikabe, Train Tracks) — the
 pointer/track ones regenerated as message-seeded v2 on 2026-10-09, the last two still with their
 own codecs. **Site root caveat:** the published root `…/GoblinPuzzles/` 404s; the site is served
