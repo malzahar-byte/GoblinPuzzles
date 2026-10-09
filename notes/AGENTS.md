@@ -13,8 +13,13 @@ your task.
 ## Invariants — never broken, in any puzzle
 
 1. **A puzzle's whole state lives in its URL.** No server, no database. Opening a link
-   regenerates that exact puzzle.
-2. **Link formats are versioned and never broken.** Old links keep working forever.
+   regenerates that exact puzzle. Generation is seeded from the secret message and the options:
+   the same message + the same options always produce the same puzzle and the same link, so
+   `Math.random` is never part of generation.
+2. **Link formats are versioned; only the current version must work.** When a format changes,
+   older links may stop opening. Links are examples, not a distribution channel: keep no legacy
+   decoders, no "old links still work" paths, and spend no effort on backward compatibility
+   unless the owner asks.
 3. **Nothing too big for a URL is ever stored.** An uploaded image may shape a puzzle
    client-side; it never becomes part of the link.
 4. **Every puzzle hides a message, XOR-locked against its own solution state.** So the solution
@@ -26,17 +31,19 @@ your task.
 
 ## How work happens here
 
-One version is handed out to every agent — call it the **baseline**. Agents work separately, each
-on one job, each starting from that same baseline. Nothing in the baseline changes while the work
-is in flight. When everyone is done, one agent (the **combiner**) merges the results and makes the
-single next version. You are one track agent unless you are told you are the combiner.
+Agents may work in parallel, each starting from the same baseline commit. Shared contracts
+(`notes/interfaces/`, the invariants, the rules) stay frozen while work is in flight (R8). Every
+finished change is committed, pushed (R15) and steps the version (R7) — save points included. A
+big version (a new number or suffix) is the owner's call; until then, keep stepping the patch.
 
 Two consequences you must respect:
 
-- **You do not change the version.** Leave `GDP_BUILD` and every `?v=` exactly as handed to you.
-  Only the combiner bumps it, once, for the whole round.
+- **Every commit steps the version.** Run `node dev-tools/bump-build.mjs` before each commit; it
+  bumps `GDP_BUILD` one patch step and re-points every `?v=` in the same pass (R7). Save points
+  step it too — no commit ships an unchanged version.
 - **You do not edit the baseline's shared contracts** (`notes/interfaces/`, the invariants, the
-  rules). If you need one changed, request it; do not assume it changed.
+  rules) without the owner's approval. If you need one changed, request it; do not assume it
+  changed.
 
 ## Rules
 
@@ -69,8 +76,10 @@ A new puzzle folder (`PuzzleForge/<Name>/`) copied from `shared/puzzle-template/
 flow, not a move — no approval needed. Research and reasoning never need a new document either:
 they go to `history.md` / `backlog.md` (R2).
 
-**R7 — The version is frozen for the round.** Do not change `GDP_BUILD` or any `?v=`. Only the
-combiner bumps it, once.
+**R7 — Every commit steps the version.** Run `node dev-tools/bump-build.mjs` before each commit:
+`GDP_BUILD` moves one patch step (`13.0.0logic` → `13.0.1logic`) and every `?v=` is re-pointed in
+the same pass. Even a save point steps it — no commit ships an unchanged version. Only the owner
+calls a big version (`13.1.0logic` or a new round); until then keep stepping the patch.
 
 **R8 — The baseline is frozen for the round.** The files in `notes/interfaces/` and the rules here
 do not change while a round is in flight. A change is a request, not an edit.
@@ -112,17 +121,19 @@ name or family. "I could not do X" is only allowed after you tried X once and sa
   it when the work lands. The next session reads it first.
 - To undo, never rewrite history — no `reset --hard`, no rebase, no force-push. Add a correcting
   commit or `git revert <sha>`.
-- A commit changes no files: the version stays frozen (R7) and the baseline contracts stay frozen
-  (R8).
+- A save point also steps the version (R7). The baseline contracts stay frozen (R8).
 
 **R16 — Answer first, tools second.** When the owner asks a question or for a report, the answer
 comes from `notes/`, the reasoning already visible in this conversation, and read-only inspection
 (`git status`, `git log`, `grep`, `sed`, `ls`) — no tests, no installs, no edits until the answer is
-delivered. "Check X" means look at X and report; fixing it is a separate instruction. Drifting off
+delivered. Answer in your own words: read, think and synthesize; never hand back a verbatim echo of
+a note or a quote as the whole answer. "Check X" means look at X and report; fixing it is a separate instruction. Drifting off
 the asked task is the most expensive failure this project has: it is the one thing the owner cannot
 recover.
 
-**R17 — Test ownership: cheap for the agent, hard for the owner's runner.** The agent runs the fast
+**R17 — Test ownership: cheap for the agent, hard for the owner's runner.** The agent's own tests must be few, easy and
+essential: fast, deterministic (fixed seed — no clock, network or random), failing only for a real
+defect, with no flaky failure mode. The agent runs the fast
 Node gate (`node dev-tools/check-all.mjs`) when a change needs it, plus the one puzzle `test-*.mjs`
 that covers a touched logic file. Everything slow, browser-based or visual belongs to the owner
 through `Run-Local.cmd` (Quick / Full / Browser jobs in `dev-tools/local-runner.mjs`); results come

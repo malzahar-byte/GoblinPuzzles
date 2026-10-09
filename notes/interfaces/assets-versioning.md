@@ -17,6 +17,6 @@
 
 ## Rules
 
-- **Only the combiner bumps `GDP_BUILD`**, once per round, and re-points every `?v=` in the same
-  pass. Track agents never touch it (`AGENTS.md` R7).
-- A track that needs a fresh load can rely on the `_gdp` reload without changing the build string.
+- **Every commit steps `GDP_BUILD`** by one patch step and re-points every `?v=` in the same pass:
+  `node dev-tools/bump-build.mjs` before each commit, save points included (`AGENTS.md` R7).
+- A build that needs a fresh load can rely on the `_gdp` reload without changing the build string.

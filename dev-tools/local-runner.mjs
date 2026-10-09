@@ -1,6 +1,6 @@
 // GoblinPuzzles - local runner, started by Run-Local.cmd at the folder root.
 //
-// Local-only tooling: it never changes the version and is not part of the published site.
+// Local-only tooling: it never rewrites files and is not part of the published site.
 //
 // What it does:
 //   - serves this folder on 127.0.0.1 and opens Chrome at the Forge,
@@ -206,6 +206,7 @@ function writeResult(name, entry) {
     const sections = body.split('\n\n---\n\n').map(s => s.trim()).filter(Boolean);
     sections.unshift(section);
     const head = '# GoblinPuzzles - local test results\n\n'
+        + 'Run against build ' + readBuild() + ' on ' + process.platform + '.\n'
         + 'Newest run first. Written by Run-Local.cmd / dev-tools/local-runner.mjs.\n'
         + 'Copy this file back to the agents when results need reporting.\n\n';
     fs.writeFileSync(RESULTS_FILE, head + RESULTS_MARK + '\n\n' + sections.slice(0, KEEP_RUNS).join('\n\n---\n\n') + '\n');
