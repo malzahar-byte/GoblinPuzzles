@@ -1,6 +1,6 @@
 // Binairo tests: solver counts, generator uniqueness, link round-trip, decrypt.
 // The 8x8 case MUST finish quickly now — the old column-only-at-the-leaf check made it time out.
-import { solve, generate, encodeLink, parseLink, decryptMessage, isSolved, logicSolvable, CELL } from '../js/binairo-logic.js';
+import { solve, generate, encodeFromMessage, encodeSeededLink, parseLink, decryptMessage, isSolved, logicSolvable, CELL } from '../js/binairo-logic.js';
 
 let bad = 0;
 const check = (name, ok) => { if (!ok) { bad++; console.log('FAIL', name); } };
@@ -22,13 +22,13 @@ for (let r = 0; r < N6; r++) for (let c = 0; c < N6; c++) givens6[r * N6 + c] = 
 check('full 6x6 grid is a valid solution', isSolved(N6, givens6, grid6.flat().map(v => v === 1 ? CELL.ONE : CELL.ZERO)));
 check('full 6x6 grid solves uniquely', solve(N6, givens6, 2).count === 1);
 
-// The owner's 6x6 Test-Mode link (EiNrgooiGgpNaziN-cgIcqEZFpQuuoh-) has exactly one solution
-// but cannot be finished with the three rules — the "are our 6x6 boards just too hard?" report
-// (2026-10-08). It stays a valid puzzle; the generator simply no longer ships boards like it.
+// The 2026-10-08 "are our 6x6 boards just too hard?" report, kept as plain givens (it used to be
+// a link; old link versions are retired, invariant 2). Unique, but NOT finishable with the three
+// player rules — the generator no longer ships boards like it.
 {
-    const hard = parseLink('EiNrgooiGgpNaziN-cgIcqEZFpQuuoh-');
-    check('old 6x6 test link still parses and is unique', hard.N === 6 && solve(hard.N, hard.givens, 2).count === 1);
-    check('old 6x6 test link is NOT hand-solvable (the report)', logicSolvable(hard.N, hard.givens) === false);
+    const hard = [-1,-1,1,-1,-1,-1,0,-1,-1,-1,-1,0,-1,-1,-1,-1,1,1,-1,-1,-1,-1,-1,-1,0,-1,-1,0,-1,-1,-1,-1,-1,0,-1,-1];
+    check('fixture 6x6 is unique', solve(6, hard, 2).count === 1);
+    check('fixture 6x6 is NOT hand-solvable (the report)', logicSolvable(6, hard) === false);
 }
 
 // Generation across sizes; the 8x8 one is the regression.
@@ -44,15 +44,34 @@ for (const N of [6, 8, 10]) {
     // alone allowed boards that need a guess.
     check(`${N}x${N} puzzle is hand-solvable`, logicSolvable(N, p.givens) === true);
     const msg = 'Secret ' + N + '!';
-    const id = encodeLink(N, p.givens, msg);
-    const info = parseLink(id);
+    const info = parseLink(encodeFromMessage(N, msg));
     const re = solve(info.N, info.givens, 2);
-    check(`${N}x${N} link round-trips`, re.count === 1 && info.N === N && JSON.stringify(info.givens) === JSON.stringify(p.givens));
+    check(`${N}x${N} seeded round-trips`, re.count === 1 && info.N === N && info.version === 2);
     const solvedCells = re.rows.flat().map(v => v === 1 ? CELL.ONE : CELL.ZERO);
     check(`${N}x${N} decrypts the message`, decryptMessage(info.enc, info.msgType, solvedCells) === msg);
     console.log(`${N}x${N}: generated in ${took} ms`);
     check(`${N}x${N} generated under 5 s`, took < 5000);
 }
+
+// ---- seeded links: same message + size gives the same puzzle and the same link ----
+const idA = encodeFromMessage(6, 'Nice work!');
+const idB = encodeFromMessage(6, 'Nice work!');
+check('seeded: same message + size gives the same link', idA === idB);
+const pA = parseLink(idA);
+check('seeded: link version is 2', pA.version === 2 && pA.N === 6);
+const sA = solve(pA.N, pA.givens, 2);
+check('seeded: unique solution', sA.count === 1 && !sA.aborted);
+check('seeded: hand-solvable', logicSolvable(pA.N, pA.givens));
+const cellsA = sA.rows.flat().map(v => v === 1 ? CELL.ONE : CELL.ZERO);
+check('seeded: message decrypts with the solution', decryptMessage(pA.enc, pA.msgType, cellsA) === 'Nice work!');
+check('seeded: a different message gives a different link', encodeFromMessage(6, 'Another secret') !== idA);
+const pSeed = parseLink(encodeSeededLink(6, 12345, 'Pinned seed'));
+check('seeded: pinned seed round-trips', pSeed.seed === 12345 && pSeed.givens.length === 36);
+
+// ---- old link versions are retired, not kept readable (invariant 2) ----
+let rejected = false;
+try { parseLink('IeqUb-UsJEgNoQQGcb_XI-Eskk-c'); } catch (e) { rejected = true; }
+check('v1 link is rejected (no legacy decoder)', rejected);
 
 const total = Date.now() - t0;
 console.log(`total ${total} ms`);

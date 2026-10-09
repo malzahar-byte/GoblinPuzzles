@@ -11,8 +11,8 @@
 // The generator builds a solution first (random islands, then the sea), reads the clues off it,
 // and ships the board only when a limit-2 search proves the clues have exactly one solution —
 // the message lock depends on that (notes/AGENTS.md invariant 4).
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.5logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.5logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.6logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.6logic';
 
 export const CELL = { UNKNOWN: 0, ISLAND: 1, SEA: 2 };
 export const ACTION_TYPE = { CELL: 0 };

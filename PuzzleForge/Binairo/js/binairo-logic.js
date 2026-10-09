@@ -11,8 +11,9 @@
 // balance and vertical triples as each row lands and rejecting duplicate rows immediately.
 // Columns are completed only by the last row, so duplicate columns are checked there.
 // An ABORTED search means "unknown" and is never treated as proof of uniqueness.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.5logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.5logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.6logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.6logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.6logic';
 
 export const CELL = { EMPTY: 0, ZERO: 1, ONE: 2 };
 
@@ -244,30 +245,65 @@ export function isSolved(N, givens, cells) {
     return true;
 }
 
-// ---- link ("the link is the save file") — same framing as Akari, one dim, 2 bits per cell ----
+// ---- link ("the link is the save file"): message-seeded, version 2 ----
+//
+// The link stores the seed, never the board: the same message + size always gives the same puzzle
+// and the same link, and parseLink rebuilds the givens from the seed. Only version 2 is read;
+// there is no v1 decoder (invariant 2 — old versions are retired, not kept readable).
 const solutionKey = (solution) => bitsFrom(solution);
-export function encodeLink(N, givens, message, msgType = 0) {
-    const res = solve(N, givens, 2);
+export const LINK_VERSION = 2;
+
+export function seedFromMessage(message) {
+    return hash(Array.from(message).map(charToNum)) & 0x7fffffff;
+}
+
+export function generateFromSeed(N, seed) {
+    return generate(N, getRandomizer(seed), { attempts: 3 });
+}
+
+// The message hash, advanced until it yields a unique, hand-solvable puzzle.
+export function seedForMessage(N, message, tries = 4000) {
+    let seed = seedFromMessage(message);
+    for (let i = 0; i < tries; i++) {
+        if (generateFromSeed(N, seed)) return seed;
+        seed = (seed + 1) & 0x7fffffff;
+    }
+    return -1;
+}
+
+export function encodeSeededLink(N, seed, message, msgType = 0) {
+    const p = generateFromSeed(N, seed);
+    if (!p) throw new Error('No unique puzzle for this seed');
+    const res = solve(N, p.givens, 2);
     if (res.aborted || res.count !== 1) throw new Error('Puzzle must have exactly one solution');
     const enc = lockMessage(message, msgType, solutionKey(res.rows.flat()));
-    const payload = new BitSeq();
-    for (let i = 0; i < N * N; i++) payload.appendNum(givens[i] < 0 ? 0 : givens[i] + 1, 2);
-    const len = 6 + 3 + 6 + payload.length() + 1 + enc.length();
+    const len = 6 + 3 + 6 + 31 + 1 + enc.length();
     const gap = (6 - len % 6) % 6;
-    const b = new BitSeq().appendNum(0, 6).appendNum(gap, 3).appendNum(0, gap).appendNum(N, 6);
-    b.append(payload.get()).appendNum(msgType, 1).append(enc.get());
+    const b = new BitSeq().appendNum(LINK_VERSION - 1, 6).appendNum(gap, 3).appendNum(0, gap)
+        .appendNum(N, 6).appendNum(seed, 31).appendNum(msgType, 1).append(enc.get());
     return b.getShuffled().toAlphas();
 }
+
+// What a creator calls: message (+ size) -> the link, deterministically.
+export function encodeFromMessage(N, message, msgType = 0) {
+    const seed = seedForMessage(N, message);
+    if (seed < 0) throw new Error('Could not seed a unique puzzle for this message at this size');
+    return encodeSeededLink(N, seed, message, msgType);
+}
+
 export function parseLink(id) {
     const rd = new BitSeq().appendAlphas(id).getUnshuffled().getReader();
     const version = 1 + rd.readNum(6);
-    if (version !== 1) throw new Error('Unknown Binairo link version ' + version);
+    if (version !== LINK_VERSION) throw new Error('Unknown Binairo link version ' + version);
     rd.readNum(rd.readNum(3));
     const N = rd.readNum(6);
-    const givens = new Array(N * N).fill(-1);
-    for (let i = 0; i < N * N; i++) { const v = rd.readNum(2); givens[i] = v === 0 ? -1 : v - 1; }
+    // Seeded link: the givens are rebuilt from the seed, never stored.
+    const seed = rd.readNum(31);
     const msgType = rd.readNum(1);
-    return { version, N, givens, msgType, enc: new BitSeq(rd.read()) };
+    const enc = new BitSeq(rd.read());
+    const p = generateFromSeed(N, seed);
+    if (!p) throw new Error('Seeded Binairo link does not generate a puzzle');
+    return { version, N, givens: p.givens, seed, msgType, enc };
 }
 // cells: player's N*N CELL array.
 export const decryptMessage = (enc, msgType, cells) =>
