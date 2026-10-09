@@ -5,15 +5,15 @@
 // p5.js is no longer used. No behaviour changed: same clicks, same drag rules, same hint
 // check-offs, same undo/redo, same save points, same timer rule, same secret message.
 
-import * as nono from './util/nono-utils.js?v=13.0.8logic';
-import * as idParser from './util/id-parser.js?v=13.0.8logic';
-import { BOARD_STYLES, buildPalette } from './util/board-styles.js?v=13.0.8logic';
-import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js?v=13.0.8logic';
-import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js?v=13.0.8logic';
-import { mountBoard } from '../../../shared/gdp-board.js?v=13.0.8logic';
-import { setupFreshButton } from '../../../shared/gdp-fresh.js?v=13.0.8logic';
-import { createModel } from './nonogram-model.js?v=13.0.8logic';
-import { createNonogramAdapter } from './nonogram-board.js?v=13.0.8logic';
+import * as nono from './util/nono-utils.js?v=13.0.9logic';
+import * as idParser from './util/id-parser.js?v=13.0.9logic';
+import { BOARD_STYLES, buildPalette } from './util/board-styles.js?v=13.0.9logic';
+import { loadSettings, saveSettings, currentTheme, applyTheme, setupThemeButton, PROGRESS_PREFIX } from './util/settings.js?v=13.0.9logic';
+import { setupSettingsDock, setupTooltips } from '../../../shared/gdp-ui.js?v=13.0.9logic';
+import { mountBoard } from '../../../shared/gdp-board.js?v=13.0.9logic';
+import { setupFreshButton } from '../../../shared/gdp-fresh.js?v=13.0.9logic';
+import { createModel } from './nonogram-model.js?v=13.0.9logic';
+import { createNonogramAdapter } from './nonogram-board.js?v=13.0.9logic';
 
 let id = new URLSearchParams(window.location.search).get('id');
 

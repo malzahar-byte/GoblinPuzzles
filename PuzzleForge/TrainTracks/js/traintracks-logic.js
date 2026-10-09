@@ -8,8 +8,8 @@
 //
 // A piece is a bitmask of the sides it joins: N=1, E=2, S=4, W=8. Legal pieces join exactly two
 // sides, so there are six of them plus the empty cell.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.8logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.8logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.9logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.9logic';
 
 export const DIR = { N: 1, E: 2, S: 4, W: 8 };
 // index 0 = empty, 1..6 = the six pieces (NS, EW, NE, NW, SE, SW)
@@ -81,8 +81,6 @@ export function solve(W, H, rowClue, colClue, givens, limit = 2, maxNodes = 4000
 
     const find = (a) => { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a]; } return a; };
 
-    const rowRoom = (r) => W - rowUsed[r];          // cells left in the row
-    const colRoom = (c) => H - colUsed[c];
 
     const rec = (i) => {
         if (count >= limit || aborted) return;
@@ -151,45 +149,71 @@ export function solve(W, H, rowClue, colClue, givens, limit = 2, maxNodes = 4000
 // ---- generator ----
 function shuffle(a, rng) { for (let i = a.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
-// A random single loop: start from a 2×2 ring and repeatedly push an "ear" — a cell that touches
-// two neighbouring loop cells joins between them, so the ring stays one simple loop.
-function randomLoop(W, H, rng, targetCells) {
+// A random simple loop, grown from a 2x2 ring by pushing one loop edge outward: the edge a-b
+// becomes a -> a' -> b' -> b (a' and b' are the same pair one row/column out). The pushed pair
+// must be free and must not touch the rest of the loop except at a and b, which keeps the ring a
+// single simple cycle. (The previous version inserted an \"ear\" that no grid cell can have: two
+// adjacent cells share no common neighbour, so it built broken loops — the solver bug's root.)
+export function randomLoop(W, H, rng, targetCells) {
     const N = W * H;
-    let loop = null;
-    for (let t = 0; t < 40 && !loop; t++) {
-        const r0 = (rng() * (H - 1)) | 0, c0 = (rng() * (W - 1)) | 0;
-        loop = [idx(W, r0, c0), idx(W, r0, c0 + 1), idx(W, r0 + 1, c0 + 1), idx(W, r0 + 1, c0)];
-    }
-    if (!loop) return null;
+    if (W < 2 || H < 2) return null;
+    const r0 = (rng() * (H - 1)) | 0, c0 = (rng() * (W - 1)) | 0;
+    const loop = [idx(W, r0, c0), idx(W, r0, c0 + 1), idx(W, r0 + 1, c0 + 1), idx(W, r0 + 1, c0)];
     const inLoop = new Uint8Array(N);
     for (const i of loop) inLoop[i] = 1;
-    for (let step = 0; step < targetCells * 3; step++) {
-        if (loop.length >= targetCells) break;
+    // cell may only be adjacent to the loop at the allowed cells (and freely outside it)
+    const touchesOnly = (cell, allowed) => {
+        const r = (cell / W) | 0, c = cell % W, nb = [];
+        if (r > 0) nb.push(cell - W);
+        if (r + 1 < H) nb.push(cell + W);
+        if (c > 0) nb.push(cell - 1);
+        if (c + 1 < W) nb.push(cell + 1);
+        return nb.every(j => !inLoop[j] || allowed.includes(j));
+    };
+    for (let step = 0; step < targetCells * 4 && loop.length < targetCells; step++) {
         const options = [];
         for (let k = 0; k < loop.length; k++) {
             const a = loop[k], b = loop[(k + 1) % loop.length];
             const ra = (a / W) | 0, ca = a % W, rb = (b / W) | 0, cb = b % W;
-            // a cell that is orthogonally adjacent to both a and b (a corner "ear")
-            if (ra === rb) { const r = ra - 1; if (r >= 0 && !inLoop[idx(W, r, ca)] && !inLoop[idx(W, r, cb)]) options.push({ k, cell: idx(W, r, ca) }); const r2 = ra + 1; if (r2 < H && !inLoop[idx(W, r2, ca)] && !inLoop[idx(W, r2, cb)]) options.push({ k, cell: idx(W, r2, ca) }); }
-            else if (ca === cb) { const c1 = ca - 1; if (c1 >= 0 && !inLoop[idx(W, ra, c1)] && !inLoop[idx(W, rb, c1)]) options.push({ k, cell: idx(W, ra, c1) }); const c2 = ca + 1; if (c2 < W && !inLoop[idx(W, ra, c2)] && !inLoop[idx(W, rb, c2)]) options.push({ k, cell: idx(W, ra, c2) }); }
+            const push = (a2, b2) => {
+                if (a2 < 0 || b2 < 0 || a2 >= N || b2 >= N) return;
+                if (inLoop[a2] || inLoop[b2]) return;
+                const allow = [a, b, a2, b2];
+                if (!touchesOnly(a2, allow) || !touchesOnly(b2, allow)) return;
+                options.push({ k, a2, b2 });
+            };
+            if (ra === rb) {            // horizontal edge: push a row up or down
+                push(a - W, b - W);
+                push(a + W, b + W);
+            } else {                    // vertical edge: push a column left or right
+                push(a - 1, b - 1);
+                push(a + 1, b + 1);
+            }
         }
         if (!options.length) break;
         const pick = options[(rng() * options.length) | 0];
-        loop.splice(pick.k + 1, 0, pick.cell);
-        inLoop[pick.cell] = 1;
+        loop.splice(pick.k + 1, 0, pick.a2, pick.b2);
+        inLoop[pick.a2] = 1; inLoop[pick.b2] = 1;
     }
     if (loop.length < 4) return null;
     return loop;
 }
 
-function piecesFromLoop(W, H, loop) {
+export function piecesFromLoop(W, H, loop) {
     const N = W * H;
     const pieces = new Array(N).fill(0);
     for (let k = 0; k < loop.length; k++) {
         const a = loop[k], b = loop[(k + 1) % loop.length];
         const ra = (a / W) | 0, ca = a % W, rb = (b / W) | 0, cb = b % W;
-        if (ra === rb) { pieces[a] |= DIR.E; pieces[b] |= DIR.W; }
-        else { pieces[a] |= DIR.S; pieces[b] |= DIR.N; }
+        // The loop can be traced in any direction: take the side from the coordinates, never
+        // from the loop order (a right-to-left step used to get EAST/WEST swapped).
+        if (ra === rb) {
+            if (cb > ca) { pieces[a] |= DIR.E; pieces[b] |= DIR.W; }
+            else { pieces[a] |= DIR.W; pieces[b] |= DIR.E; }
+        } else {
+            if (rb > ra) { pieces[a] |= DIR.S; pieces[b] |= DIR.N; }
+            else { pieces[a] |= DIR.N; pieces[b] |= DIR.S; }
+        }
     }
     return pieces;
 }
@@ -207,14 +231,13 @@ export function generate(W, H, rng = Math.random, opts = {}) {
     for (let t = 0; t < tries; t++) {
         const target = Math.max(4, Math.round(N * (0.35 + rng() * 0.3)));
         const loop = randomLoop(W, H, rng, target);
-        if (globalThis.__ttDbg2) console.log('t', t, 'target', target, 'loop', loop ? loop.length : null);
         if (!loop) continue;
         const solution = piecesFromLoop(W, H, loop);
         const { rowClue, colClue } = deriveClues(W, H, solution);
         // Start from every clue visible and every cell pre-filled, then hide/drop one clue at a
         // time while a limit-2 search still finds exactly one loop.
         const givens = solution.map(p => (p === 0 ? PIECES[0] : p));
-        const unique = () => { const res = solve(W, H, rowClue, colClue, givens, 2, opts.maxNodes ?? 60000); if (globalThis.__ttDbg2) console.log('   unique?', res.count, 'aborted', res.aborted); return !res.aborted && res.count === 1; };
+        const unique = () => { const res = solve(W, H, rowClue, colClue, givens, 2, opts.maxNodes ?? 60000); return !res.aborted && res.count === 1; };
         if (!unique()) continue;
         const steps = [];
         for (let r = 0; r < H; r++) steps.push({ kind: 'row', i: r });
@@ -226,7 +249,6 @@ export function generate(W, H, rng = Math.random, opts = {}) {
             else { const save = givens[s.i]; givens[s.i] = UNKNOWN; if (!unique()) givens[s.i] = save; }
         }
         const res = solve(W, H, rowClue, colClue, givens, 2, 400000);
-        if (globalThis.__ttDbg2) console.log('   after strip: count', res.count, 'aborted', res.aborted);
         if (res.aborted || res.count !== 1) continue;
         return { W, H, rowClue, colClue, givens, solution, attempts: t + 1 };
     }
