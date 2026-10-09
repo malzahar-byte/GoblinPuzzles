@@ -59,9 +59,10 @@ die with an agent's sandbox (owner, 2026-10-09).
    keys, no broken relative imports, every page reaches `gdp-settings.js`/`gdp-theme.css`. Run it
    whenever you touch a puzzle's settings/theme wiring, add a puzzle, or move a folder.
 3. **`check-docs.mjs`** — the `notes/` contract. Run it whenever you touch documentation.
-3b. **`check-palettes.mjs`** — board visibility: every palette in both themes keeps its board surface
-   at least 12 steps from the page background. Run it whenever you touch palettes, chrome or the theme
-   CSS; it is part of the gate.
+3b. **`check-palettes.mjs`** — the palette contract (`decisions/0006`): every palette in both themes
+   must keep its board surface at least 12 steps from the page background (**enforced**, part of the
+   gate), and every role it draws must clear its contrast floor (**reported** as a worklist until the
+   tuning pass lands, then `--strict`). Run it whenever you touch palettes, chrome or the theme CSS.
 4. **A real browser** — the only way to check rendering, the settings dock and real click/drag. By
    R17 this is the owner's job: the runner's **Browser** button (or a hand pass). The agent reaches
    for it only if a browser happens to be installed already; it does not install one.

@@ -8,9 +8,9 @@
 //
 // A piece is a bitmask of the sides it joins: N=1, E=2, S=4, W=8. Legal pieces join exactly two
 // sides, so there are six of them plus the empty cell.
-import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.22logic';
-import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.22logic';
-import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.22logic';
+import { BitSeq } from '../../../shared/gdp-bitseq.js?v=13.0.23logic';
+import { bitsFrom, lockMessage, unlockMessage } from '../../../shared/gdp-secret.js?v=13.0.23logic';
+import { hash, charToNum, getRandomizer } from '../../../shared/gdp-math-utils.js?v=13.0.23logic';
 
 export const DIR = { N: 1, E: 2, S: 4, W: 8 };
 // index 0 = empty, 1..6 = the six pieces (NS, EW, NE, NW, SE, SW)

@@ -359,3 +359,23 @@ Append only; a correction is a new entry, never an edit.
   surface to `bg` left a *different* six too close (classic-dark 8, forest-dark 5, candy-light 7,
   mono-light 9, neon-dark 10, contrast-light 11), and seven `bg` values were tuned so that all
   twenty pass. `backlog.md` was corrected in place in the same commit.
+
+## 2026-10-09 — Cloud_Cline_1 — palettes judged by evidence: a role list and a contrast contract
+
+- **Owner direction:** judge the palettes on evidence (contrast, the palette rules), not taste; they
+  were written by agents in passing and are not gospel; they must serve a puzzle site that draws many
+  different things. So they were measured instead of discussed.
+- **Evidence.** `dev-tools/check-palettes.mjs` now measures every palette × theme against a contract:
+  **37 of 200 palette/role pairs are below a usable contrast** — 16 "muted ink on board" (candy 1.45,
+  paper 2.02, mono 2.02, ocean 2.03, classic 2.26 …), 5 "thin grid on board" (neon 1.07, candy 1.10,
+  classic-dark 1.37), 4 "mark colour on board" (candy 2.98, ocean 4.02), 4 "cell base vs board"
+  (forest 5, sunset 8), 4 "accent ink on accent", 2 "thick grid", 2 "accent on board".
+- **Decision (`decisions/0006`):** keep the palette model but give it a contract — one colour per role
+  (today `excludedColor` is simultaneously the mark, the hover highlight and the nonogram marked
+  state), every palette defines every role, the checker enforces the floors, and a failing value is
+  tuned by walking its own lightness rather than redesigned by taste. New roles the puzzle work needs:
+  `given`, `markCandidate`, `error`, `satisfied`.
+- The board-visibility rule stays **enforced** (it is the owner's original report); the wider contract
+  prints as a worklist and flips to `--strict` when the tuning pass lands with those new roles — the
+  same job as Phase 1 items 5/7. RAN: `node dev-tools/check-palettes.mjs` → no enforced failures, 37 on
+  the worklist.

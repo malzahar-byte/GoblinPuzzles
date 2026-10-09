@@ -82,7 +82,9 @@ settings/progress, secret lock, asset versioning.
   surface comes from the palette's own `bg`** (not a cell colour, which made boards invisible in some
   styles; 2026-10-09). Six of the twenty palette/theme pairs sat within 12 RGB steps of the page
   background before the fix — paper, ocean, contrast, candy, mono (light) and neon, classic, forest
-  (dark) had their `bg` tuned so all twenty pass `dev-tools/check-palettes.mjs`;
+  (dark) had their `bg` tuned so all twenty pass. The wider palette contract (roles, contrast floors,
+  the 37-pair worklist) is `decisions/0006`; `dev-tools/check-palettes.mjs` reports it and enforces the
+  board-visibility rule today, `--strict` once the tuning pass lands;
   `resolvePalette()`, `buildCellFill()`, `resolveChrome()` (board chrome; see
   `interfaces/palette-chrome.md`).
 - `gdp-theme.css` — page shell, panels, toolbar, offcanvas panel look, (i) info buttons, 2-column

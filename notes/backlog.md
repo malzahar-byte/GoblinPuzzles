@@ -361,3 +361,17 @@ read that first. Statuses: `approved` = do it, `proposed` = still a suggestion.
   are in `check-palettes.mjs` output.
 - `done` — Pictogram/Nonogram already drew `palette.bg`, so they inherit the same tuned colours and
   their board background becomes visible in light styles too.
+
+## Palette contract (2026-10-09) — judged by evidence, not taste
+
+- `done` — **`decisions/0006` + the measured contract.** The palettes were invented by agents with no
+  statement of what they must do; measured with the extended `dev-tools/check-palettes.mjs`, **37 of
+  200 palette/role/theme pairs are below a usable contrast** (16 muted-ink, 5 thin-grid, 4 mark colour,
+  4 cell-base-vs-board, 4 accent-ink, 2 thick-grid, 2 accent). The decision: one colour per role (today
+  `excludedColor` is the mark, the hover highlight *and* the nonogram marked state), every palette
+  defines every role, thresholds are enforced by the checker, and failing values are tuned by walking
+  lightness — never redesigned by taste.
+- `approved` — **The tuning pass, together with the new roles** (`given`, `markCandidate`, `error`,
+  `satisfied`): add them, tune every palette to the contract, then flip `check-palettes.mjs` to
+  `--strict` so the gate holds it. This is the same job as Phase 1 items 5 and 7. →
+  `shared/gdp-palettes.js`, `interfaces/palette-chrome.md`, `decisions/0006`.
